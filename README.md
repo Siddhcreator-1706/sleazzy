@@ -1,6 +1,6 @@
 # Sleazzy
 
-A full-stack venue slot booking system for university clubs and committees. Clubs can request meeting rooms, administrators can approve or reject bookings, and everyone gets a real-time view of the master schedule — no more double-bookings or email chains.
+Slot Booking made Eazzy, A full-stack venue slot booking system for university clubs and committees. Clubs can request meeting rooms, administrators can approve or reject bookings, and everyone gets a real-time view of the master schedule — no more double-bookings or email chains.
 
 ## Features
 
