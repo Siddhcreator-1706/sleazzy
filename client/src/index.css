@@ -15,13 +15,13 @@
   --textSecondary: #334155;
   --textMuted: #64748b;
 
-  --brand: #6366f1;
-  --brand-glow: rgba(99, 102, 241, 0.15);
-  --brandLink: #4f46e5;
+  --brand: #2C3E8A;
+  --brand-glow: rgba(44, 62, 138, 0.15);
+  --brandLink: #1E2B63;
 
   --success: #059669;
-  --error: #e11d48;
-  --warning: #d97706;
+  --error: #E84E36;
+  --warning: #FDC02F;
 
   --popover: #ffffff;
   --popover-foreground: #0f172a;
@@ -45,13 +45,13 @@
   --textSecondary: #94A3B8;
   --textMuted: #64748B;
 
-  --brand: #818cf8;
-  --brand-glow: rgba(129, 140, 248, 0.5);
-  --brandLink: #a5b4fc;
+  --brand: #3B82F6;
+  --brand-glow: rgba(59, 130, 246, 0.25);
+  --brandLink: #93C5FD;
 
   --success: #34d399;
-  --error: #f87171;
-  --warning: #fbbf24;
+  --error: #FF6B52;
+  --warning: #FFD166;
 
   --popover: #111827;
   --popover-foreground: #F8FAFC;
@@ -144,19 +144,19 @@
     background-color: var(--bgMain);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     background-image:
-      radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.06), transparent 35%),
-      radial-gradient(circle at 85% 75%, rgba(244, 63, 94, 0.04), transparent 35%),
-      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.03), transparent 45%);
+      radial-gradient(circle at 15% 20%, rgba(44, 62, 138, 0.06), transparent 35%),
+      radial-gradient(circle at 85% 75%, rgba(232, 78, 54, 0.04), transparent 35%),
+      radial-gradient(circle at 50% 50%, rgba(253, 192, 47, 0.03), transparent 45%);
     background-attachment: fixed;
   }
 
   .dark body {
     background-color: #020617;
     background-image:
-      radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.18), transparent 40%),
-      radial-gradient(circle at 100% 0%, rgba(168, 85, 247, 0.12), transparent 40%),
-      radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.12), transparent 40%),
-      radial-gradient(circle at 0% 100%, rgba(236, 72, 153, 0.12), transparent 40%);
+      radial-gradient(circle at 0% 0%, rgba(98, 123, 234, 0.12), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(255, 107, 82, 0.1), transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(255, 209, 102, 0.1), transparent 40%),
+      radial-gradient(circle at 0% 100%, rgba(98, 123, 234, 0.1), transparent 40%);
   }
 
   /* Responsive typography scale */
@@ -205,7 +205,7 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-linear-to-r from-brand to-purple-500;
+    @apply bg-clip-text text-transparent bg-linear-to-r from-brand to-[#E84E36];
   }
 
   @keyframes shimmer {
@@ -272,6 +272,109 @@
 .rdp-day_today {
   font-weight: bold;
   color: var(--brand);
+}
+
+/* ================================================================
+   React Big Calendar Overrides
+   ================================================================ */
+.rbc-btn-group button {
+  background-color: var(--card);
+  border: 1px solid var(--borderSoft);
+  color: var(--textPrimary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  margin-right: 0.25rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.rbc-btn-group button:hover {
+  background-color: var(--hoverSoft);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.rbc-btn-group button.rbc-active {
+  background-color: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
+}
+
+.rbc-toolbar button {
+  background: none;
+}
+
+.rbc-calendar {
+  color: var(--textPrimary);
+}
+
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view {
+  background-color: var(--card);
+  border-color: var(--borderSoft);
+  color: var(--textPrimary);
+}
+
+.rbc-header,
+.rbc-month-row,
+.rbc-day-bg,
+.rbc-date-cell,
+.rbc-agenda-view table.rbc-agenda-table,
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td,
+.rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+  border-color: var(--borderSoft);
+}
+
+.rbc-header {
+  color: var(--textPrimary);
+}
+
+.rbc-date-cell {
+  color: var(--textPrimary);
+}
+
+.rbc-off-range {
+  color: var(--textMuted);
+}
+
+.rbc-off-range-bg {
+  background-color: var(--hoverSoft);
+}
+
+.rbc-today {
+  background-color: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.rbc-event,
+.rbc-day-slot .rbc-background-event {
+  background-color: var(--brand);
+  color: #fff;
+}
+
+.dark .rbc-month-view,
+.dark .rbc-time-view,
+.dark .rbc-agenda-view {
+  background-color: rgba(15, 23, 42, 0.55);
+}
+
+.dark .rbc-off-range-bg {
+  background-color: rgba(148, 163, 184, 0.08);
+}
+
+.dark .rbc-today {
+  background-color: rgba(59, 130, 246, 0.16);
+}
+
+.dark .rbc-date-cell,
+.dark .rbc-header {
+  color: var(--textPrimary);
+}
+
+.dark .rbc-off-range {
+  color: rgba(148, 163, 184, 0.55);
 }
 
 /* ================================================================

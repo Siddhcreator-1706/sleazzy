@@ -21,11 +21,17 @@ interface CalendarEvent {
   endTime: string
   venueName?: string
   status?: string
+  eventType?: string
 }
 
 type EventsByDateMap = Map<string, CalendarEvent[]>
 
 const CalendarEventsContext = React.createContext<EventsByDateMap>(new Map())
+
+function formatEventType(type?: string) {
+  if (!type) return ""
+  return type.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
+}
 
 function makeDateKey(d: Date) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
@@ -174,7 +180,7 @@ function Calendar({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                   className={cn(className)}
-                  {...props}
+                  {...(props as any)}
                 />
               )
             },
@@ -308,8 +314,8 @@ function EventHoverCard({
     dateLabel: string
   } | null>(null)
 
-  const showTimer = React.useRef<ReturnType<typeof setTimeout>>()
-  const hideTimer = React.useRef<ReturnType<typeof setTimeout>>()
+  const showTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const hideTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const hoveredKey = React.useRef<string | null>(null)
   const overPopup = React.useRef(false)
 
@@ -455,8 +461,15 @@ function EventHoverCard({
                           <span className="truncate">{event.venueName}</span>
                         </div>
                       )}
-                      <div className="text-[11px] text-primary font-medium mt-1">
-                        {event.clubName}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {event.eventType && (
+                          <span className="rounded-md border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                            {formatEventType(event.eventType)}
+                          </span>
+                        )}
+                        <span className="text-[11px] text-primary font-medium">
+                          {event.clubName}
+                        </span>
                       </div>
                     </div>
                   </motion.div>

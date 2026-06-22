@@ -84,10 +84,31 @@ router.get('/public-bookings', async (_req, res) => {
       FROM bookings b
       LEFT JOIN clubs c ON b.club_id = c.id
       LEFT JOIN venues v ON b.venue_id = v.id
-      WHERE b.status = 'approved' AND b.end_time >= NOW()
+      WHERE b.status = 'approved'
+        AND b.end_time >= NOW()
+        AND b.event_type IS DISTINCT FROM 'closed_club'
       ORDER BY b.start_time ASC
     `);
     
+    return res.json(rows);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/campus-bookings', authMiddleware, async (_req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT b.*, 
+             json_build_object('name', c.name) AS clubs,
+             json_build_object('name', v.name) AS venues
+      FROM bookings b
+      LEFT JOIN clubs c ON b.club_id = c.id
+      LEFT JOIN venues v ON b.venue_id = v.id
+      WHERE b.status = 'approved' AND b.end_time >= NOW()
+      ORDER BY b.start_time ASC
+    `);
+
     return res.json(rows);
   } catch (error: any) {
     return res.status(500).json({ error: error.message });

@@ -10,8 +10,11 @@ import AdminRequests from './pages/AdminRequests';
 import MasterSchedule from './pages/MasterSchedule';
 import PolicyPage from './pages/PolicyPage';
 import MyBookings from './pages/MyBookings';
+import ClubMembers from './pages/ClubMembers';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
+import ClubsCommitteesPage from './pages/ClubsCommitteesPage';
+import ClubCommittee from './pages/ClubCommittee';
 import { User } from './types';
 import { apiRequest } from './lib/api';
 import { toastError } from './lib/toast';
@@ -159,6 +162,7 @@ const App: React.FC = () => {
           <Routes>
             {/* Note: Ensure your Login component passes both the User object AND the JWT token to onLogin */}
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route path="/clubs-committees" element={<ClubsCommitteesPage onGoToLogin={() => { window.location.href = '/login'; }} />} />
             <Route path="*" element={<LandingPage onGoToLogin={() => { window.location.href = '/login'; }} />} />
           </Routes>
         </BrowserRouter>
@@ -175,6 +179,8 @@ const App: React.FC = () => {
 
             <Route path="/book" element={<BookSlot currentUser={user} />} />
             <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/members" element={<ClubMembers user={user} />} />
+            <Route path="/committee" element={user.role === 'club' ? <ClubCommittee user={user} /> : <Navigate to="/" replace />} />
             <Route path="/policy" element={<PolicyPage />} />
 
             <Route path="/admin/requests" element={<AdminRequests />} />

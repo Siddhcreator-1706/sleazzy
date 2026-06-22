@@ -17,6 +17,7 @@ type BookingRequestBody = {
   startTime: string;
   endTime: string;
   expectedAttendees?: number;
+  event_id?: string;
 };
 
 const MIN_DAYS_BY_EVENT: Record<EventType, number> = {
@@ -114,6 +115,7 @@ export const createBooking = async (req: Request, res: Response) => {
     startTime,
     endTime,
     expectedAttendees,
+    event_id,
   } = req.body as Partial<BookingRequestBody & { venueIds: string[] }>;
 
   if (!clubId || !venueIds || !Array.isArray(venueIds) || venueIds.length === 0 || !eventType || !eventName || !startTime || !endTime) {
@@ -232,8 +234,8 @@ export const createBooking = async (req: Request, res: Response) => {
       }
 
       const { rows: insertRows } = await db.query(`
-        INSERT INTO bookings (club_id, venue_id, event_name, start_time, end_time, status, user_id, event_type, expected_attendees, batch_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO bookings (club_id, venue_id, event_name, start_time, end_time, status, user_id, event_type, expected_attendees, batch_id, event_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
       `, [
         clubId,
@@ -245,7 +247,8 @@ export const createBooking = async (req: Request, res: Response) => {
         req.user?.id || null,
         eventType,
         expectedAttendees || null,
-        batchId
+        batchId,
+        event_id || null
       ]);
 
       if (insertRows.length === 0) {

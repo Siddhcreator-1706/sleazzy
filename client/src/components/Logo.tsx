@@ -23,13 +23,13 @@ export function Logo({ size = 'md', showText = true, className }: LogoProps) {
       <span
         className={cn(
           'flex shrink-0 items-center justify-center text-white drop-shadow-sm',
-          'bg-linear-to-br from-indigo-500 via-violet-500 to-cyan-500',
-          'shadow-lg shadow-indigo-500/25 dark:shadow-indigo-950/50',
+          'bg-linear-to-br from-brand via-[#E84E36] to-[#FDC02F]',
+          'shadow-lg shadow-brand/25',
           'ring-2 ring-white/25 dark:ring-white/15',
           box
         )}
         role="img"
-        aria-label="Sleazzy logo"
+        aria-label="DAU logo"
       >
         <RiCalendarCheckFill size={icon} aria-hidden />
       </span>
@@ -38,8 +38,8 @@ export function Logo({ size = 'md', showText = true, className }: LogoProps) {
           className={cn(
             text,
             'font-extrabold tracking-tight select-none bg-clip-text text-transparent',
-            'bg-linear-to-r from-brand via-purple-500 to-cyan-500',
-            'dark:from-indigo-400 dark:via-violet-400 dark:to-cyan-400'
+            'bg-linear-to-r from-brand to-[#E84E36]',
+            'dark:from-brand dark:to-[#FF6B52]'
           )}
         >
           Sleazzy

@@ -137,3 +137,53 @@ export async function sendApprovalNotification(
     return { sent: false, error: message };
   }
 }
+
+/**
+ * Send an email to the user with a temporary password when they trigger a forgot password request.
+ */
+export async function sendPasswordResetEmail(
+  email: string,
+  tempPassword: string
+): Promise<{ sent: boolean; error?: string }> {
+  if (!isEmailJsConfigured()) {
+    console.warn('EmailJS not configured; skipping password reset email.');
+    return { sent: false };
+  }
+
+  const title = 'Password Reset Request';
+  const subject = 'Password Reset - Sleazzy';
+  const message = `Dear User,\n\nWe received a request to reset your password. Your new temporary password is:\n\n${tempPassword}\n\nPlease use this password to log in and change your password in settings if needed.\n\nRegards,\nSleazzy Team`;
+  const messageHtml = `
+    <p>Dear User,</p>
+    <p>We received a request to reset your password. Your new temporary password is:</p>
+    <h3 style="background:#f4f4f4; padding:10px; display:inline-block; font-family:monospace; border-radius:4px; margin: 10px 0;">${tempPassword}</h3>
+    <p>Please use this password to log in.</p>
+    <p>Regards,<br/>Sleazzy Team</p>
+  `;
+
+  const templateParams = {
+    to_email: email,
+    title,
+    subject,
+    message,
+    message_html: messageHtml,
+    booking_count: '0',
+  };
+
+  try {
+    await emailjs.send(
+      EMAILJS_SERVICE_ID!,
+      EMAILJS_TEMPLATE_ID!,
+      templateParams,
+      {
+        publicKey: EMAILJS_PUBLIC_KEY!,
+        privateKey: EMAILJS_PRIVATE_KEY!,
+      }
+    );
+    return { sent: true };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : JSON.stringify(err, null, 2);
+    console.error('Failed to send password reset email:', errorMsg);
+    return { sent: false, error: errorMsg };
+  }
+}

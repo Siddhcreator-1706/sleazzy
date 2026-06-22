@@ -1,0 +1,66 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE SCHEMA IF NOT EXISTS auth;
+
+CREATE TABLE IF NOT EXISTS auth.users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  encrypted_password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'user',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.clubs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  group_category VARCHAR(50) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.venues (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) UNIQUE NOT NULL,
+  category VARCHAR(50) NOT NULL,
+  capacity INTEGER,
+  location VARCHAR(255),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.bookings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  club_id UUID NOT NULL REFERENCES public.clubs(id) ON DELETE CASCADE,
+  venue_id UUID NOT NULL REFERENCES public.venues(id) ON DELETE CASCADE,
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'pending',
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  event_name VARCHAR(255) NOT NULL,
+  event_type VARCHAR(50) NOT NULL,
+  expected_attendees INTEGER,
+  batch_id UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  metadata JSONB,
+  is_read BOOLEAN NOT NULL DEFAULT false,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

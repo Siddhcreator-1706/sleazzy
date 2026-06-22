@@ -28,8 +28,8 @@ const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
         ref={ref}
         className={cn(
           'p-[1px] rounded-2xl',
-          'bg-gradient-to-r from-indigo-500/80 via-purple-500/80 to-blue-500/80',
-          'dark:from-indigo-400/50 dark:via-violet-500/50 dark:to-blue-400/50',
+          'bg-gradient-to-r from-brand/80 via-[#E84E36]/80 to-[#FDC02F]/80',
+          'dark:from-brand/50 dark:to-[#FF6B52]/50',
           className
         )}
       >

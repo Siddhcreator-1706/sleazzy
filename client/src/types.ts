@@ -17,10 +17,39 @@ export interface Club {
 }
 
 export interface User {
+  id?: string;
   email: string;
   name: string; // Display name (e.g., "Programming Club" or "Sleazzy Admin")
   role: Role;
   group?: ClubGroupType; // Optional, for clubs
+  clubId?: string;
+}
+
+export interface ClubMember {
+  id: string;
+  club_id: string;
+  full_name: string;
+  roll_number: string | null;
+  email: string | null;
+  designation: string | null;
+  phone: string | null;
+  is_core_member: boolean;
+  tenure_start_date: string | null;
+  tenure_end_date: string | null;
+  tenure_end_reason: string | null;
+  promotion_history: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AppEvent {
+  id: string;
+  club_id: string;
+  name: string;
+  date: string;
+  venue: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export type EventType = 'co_curricular' | 'open_all' | 'closed_club';
@@ -44,6 +73,8 @@ export interface Booking {
   isPublic: boolean;
   startTimeISO?: string;
   endTimeISO?: string;
+  venueName?: string;
+  event_id?: string;
 }
 
 export interface GroupedBooking extends Omit<Booking, 'id' | 'venueId' | 'status'> {

@@ -4,6 +4,8 @@ import { randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import authMiddleware from '../middleware/auth';
+import { isOfficialCommitteeEmail, OFFICIAL_EMAIL_DOMAIN } from '../constants/officialEmails';
+import { sendPasswordResetEmail } from '../services/email';
 
 const router = express.Router();
 
@@ -17,6 +19,12 @@ router.post('/register', async (req, res) => {
 
     if (!providedUserId && !password) {
         return res.status(400).json({ error: 'Password is required for new accounts' });
+    }
+
+    if (!isOfficialCommitteeEmail(email)) {
+        return res.status(400).json({
+            error: `Club accounts must use an official committee email ending with ${OFFICIAL_EMAIL_DOMAIN}`,
+        });
     }
 
     try {
@@ -84,6 +92,54 @@ router.post('/login', async (req, res) => {
         return res.json({ token });
     } catch (err: any) {
         console.error('Login error:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+function generateTempPassword(): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let temp = '';
+    for (let i = 0; i < 8; i++) {
+        temp += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return temp;
+}
+
+router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
+    try {
+        const { rows } = await db.query('SELECT id FROM auth.users WHERE email = $1', [email]);
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'No account found with this email' });
+        }
+
+        const tempPassword = generateTempPassword();
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        await db.query('UPDATE auth.users SET encrypted_password = $1 WHERE email = $2', [hashedPassword, email]);
+
+        const emailResult = await sendPasswordResetEmail(email, tempPassword);
+
+        if (!emailResult.sent) {
+            console.log(`\n======================================================`);
+            console.log(`[DEV ONLY] Password Reset Requested`);
+            console.log(`Email: ${email}`);
+            console.log(`Temporary Password: ${tempPassword}`);
+            console.log(`Reason: EmailJS is not configured or failed to send (${emailResult.error || 'not configured'}).`);
+            console.log(`======================================================\n`);
+        }
+
+        return res.json({ 
+            message: 'A temporary password has been sent to your email address.' 
+        });
+
+    } catch (err: any) {
+        console.error('Forgot password error:', err);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -158,6 +214,7 @@ router.get('/profile', async (req, res) => {
             name: clubData ? clubData.name : profile.full_name,
             role: profile.role,
             group: clubData ? clubData.group_category : undefined,
+            clubId: clubData ? clubData.id : undefined,
         };
 
         return res.json(responseData);
