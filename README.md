@@ -29,7 +29,7 @@ Slot Booking made Eazzy, A full-stack venue slot booking system for university c
 
 - **Node.js** v18+
 - **npm**
-- A [Supabase](https://supabase.com) project (free tier works)
+- A [NeonDB Project](https://neon.com) project (free tier works)
 
 ## Getting Started
 
