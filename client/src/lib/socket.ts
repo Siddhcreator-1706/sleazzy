@@ -38,16 +38,52 @@ class SocketService {
     private maxReconnectAttempts = 5;
     private knownBuildVersion: string | null = null;
 
-    // Reload the app when the server reports a build different from the one we
-    // first connected with (i.e. a new version was deployed while the tab was open).
+    // Build id compiled into THIS bundle at build time (see Dockerfile/CI).
+    // Empty in local dev, in which case the stale-bundle check is skipped.
+    private readonly clientBuildId = (import.meta.env.VITE_BUILD_ID || '').trim();
+
+    // Guard against reload loops: only auto-reload once per target version per
+    // tab session, in case a cache stubbornly keeps serving the old document.
+    private alreadyReloadedFor(version: string): boolean {
+        try {
+            return sessionStorage.getItem('app:reloaded-build') === version;
+        } catch {
+            return false;
+        }
+    }
+
+    private markReloadedFor(version: string) {
+        try {
+            sessionStorage.setItem('app:reloaded-build', version);
+        } catch {
+            /* sessionStorage unavailable (private mode); best-effort only */
+        }
+    }
+
+    // Keep the running app in sync with the deployed build.
     private handleServerVersion(version: string) {
         if (!version) return;
 
         if (this.knownBuildVersion === null) {
             this.knownBuildVersion = version;
+
+            // First load: the browser may have served a cached (old) index.html
+            // and bundle without revalidating. If the build id baked into this
+            // bundle differs from what the server is actually running, we're
+            // stale — reload once to pull the freshly deployed assets.
+            if (
+                this.clientBuildId &&
+                this.clientBuildId !== version &&
+                !this.alreadyReloadedFor(version)
+            ) {
+                this.markReloadedFor(version);
+                console.log('[Socket.io] Stale bundle detected on load, reloading…');
+                window.location.reload();
+            }
             return;
         }
 
+        // A new build was deployed while this tab was open.
         if (this.knownBuildVersion !== version) {
             console.log('[Socket.io] New build detected, reloading…');
             window.location.reload();
