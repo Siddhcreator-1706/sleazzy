@@ -21,7 +21,7 @@ Slot Booking made Eazzy, A full-stack venue slot booking system for university c
 |-------|-------------|
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui (Radix UI) |
 | **Backend** | Node.js, Express, TypeScript |
-| **Database** | Supabase (PostgreSQL + Auth) |
+| **Database** | NeonDB (Serverless PostgreSQL) |
 | **Notifications** | EmailJS (optional) |
 | **Deployment** | Nginx, PM2, GitHub Actions CI/CD |
 
@@ -128,7 +128,7 @@ sleazzy/
 │   │   ├── middleware/       # Auth & request middleware
 │   │   ├── types/           # Server-side types
 │   │   ├── server.ts        # Entry point
-│   │   └── supabaseClient.ts
+│   │   └── db.ts            # NeonDB (PostgreSQL) connection pool
 │   ├── seed.ts              # Database seed script
 │   └── .env.example
 │

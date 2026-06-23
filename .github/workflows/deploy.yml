@@ -39,8 +39,6 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/sleazzy:${{ github.sha }}
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
-            VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
-            VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -69,6 +67,7 @@ jobs:
             docker run -d \
               --name sleazzy \
               --restart unless-stopped \
+              --label com.centurylinklabs.watchtower.enable=false \
               -p 3006:3006 \
               -e NODE_ENV="production" \
               -e PORT="3006" \
