@@ -254,7 +254,7 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
   };
 
   const DESIGNATION_BADGES = {
-    'Convenor': 'bg-brand/10 text-brand border-brand/20',
+    'Convener': 'bg-brand/10 text-brand border-brand/20',
     'Dy. Convener': 'bg-orange-500/10 text-orange-600 border-orange-500/20',
     'Core': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
   };
@@ -394,7 +394,7 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
             <CardHeader>
               <CardTitle className="text-lg">Active {entityType} Members</CardTitle>
               <CardDescription>
-                Convenors, core leadership, and active coordinators currently serving their tenure.
+                Conveners, core leadership, and active coordinators currently serving their tenure.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -471,7 +471,7 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
               <Label htmlFor="designation">Designation *</Label>
               <select
                 id="designation"
-                value={['Convenor', 'Dy. Convener', 'Core'].includes(formData.designation) ? formData.designation : 'Special Designation'}
+                value={['Convener', 'Dy. Convener', 'Core'].includes(formData.designation) ? formData.designation : 'Special Designation'}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === 'Special Designation') {
@@ -482,14 +482,14 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
                 }}
                 className="flex h-10 w-full rounded-xl border border-borderSoft/80 dark:border-white/10 bg-white/90 dark:bg-white/5 backdrop-blur-sm px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand disabled:cursor-not-allowed disabled:opacity-50 transition-colors [&>option]:bg-card"
               >
-                <option value="Convenor">Convenor</option>
+                <option value="Convener">Convener</option>
                 <option value="Dy. Convener">Dy. Convener</option>
                 <option value="Core">Core</option>
                 <option value="Special Designation">Special Designation</option>
               </select>
             </div>
             
-            {!['Convenor', 'Dy. Convener', 'Core'].includes(formData.designation) && (
+            {!['Convener', 'Dy. Convener', 'Core'].includes(formData.designation) && (
               <div className="grid gap-2 animate-in fade-in-50 duration-200">
                 <Label htmlFor="custom_designation">Custom Designation Title *</Label>
                 <Input

@@ -387,7 +387,7 @@ router.get('/club-members/all', async (_req, res) => {
       JOIN clubs c ON cm.club_id = c.id
       ORDER BY c.name ASC,
                CASE 
-                 WHEN cm.designation = 'Convenor' THEN 1
+                 WHEN cm.designation = 'Convener' THEN 1
                  WHEN cm.designation = 'Dy. Convener' THEN 2
                  WHEN cm.designation = 'Core' THEN 3
                  ELSE 4

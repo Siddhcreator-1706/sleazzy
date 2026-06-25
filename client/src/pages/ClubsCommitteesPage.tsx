@@ -15,6 +15,8 @@ import {
     Linkedin,
     Instagram,
     Youtube,
+    Menu,
+    X,
 } from 'lucide-react';
 import {
     Dialog,
@@ -54,21 +56,21 @@ interface CommitteeMember {
     club_id: string;
     club_name: string;
     full_name: string;
-    designation: 'Convenor' | 'Dy. Convener' | 'Core' | 'Others';
+    designation: 'Convener' | 'Dy. Convener' | 'Core' | 'Others';
     phone: string | null;
     tenure_start_date: string | null;
     tenure_end_date: string | null;
 }
 
 const DESIGNATION_ORDER = {
-    'Convenor': 1,
+    'Convener': 1,
     'Dy. Convener': 2,
     'Core': 3,
     'Others': 4,
 };
 
 const DESIGNATION_BADGES = {
-    'Convenor': 'bg-brand/10 text-brand border-brand/20',
+    'Convener': 'bg-brand/10 text-brand border-brand/20',
     'Dy. Convener': 'bg-orange-500/10 text-orange-600 border-orange-500/20',
     'Core': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
 };
@@ -83,6 +85,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
     const [activeTab, setActiveTab] = useState<'clubs' | 'committees'>('clubs');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedClubForModal, setSelectedClubForModal] = useState<Club | null>(null);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const selectedClubMembers = useMemo(() => {
         if (!selectedClubForModal) return [];
@@ -147,37 +150,106 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-bgMain pb-16">
-            {/* ====== Header ====== */}
             <header className="sticky top-0 z-30 bg-bgMain/80 backdrop-blur-xl border-b border-borderSoft/40">
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3 max-w-7xl mx-auto">
-                    <div className="flex items-center gap-4">
-                        <Logo size="md" />
+                <div className="flex items-center justify-between px-3 sm:px-6 py-3 max-w-7xl mx-auto">
+                    {/* Left: Logo & Nav Links */}
+                    <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+                        <div className="shrink-0">
+                            <Logo size="md" />
+                        </div>
+                        
+                        {/* Desktop Nav Links */}
+                        <div className="hidden md:flex items-center gap-1 sm:gap-2">
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/')}
+                                className="rounded-xl h-10 px-2.5 sm:px-4 font-semibold text-textSecondary hover:text-textPrimary hover:bg-hoverSoft transition-all text-xs sm:text-sm"
+                            >
+                                Home
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/clubs-committees')}
+                                className="rounded-xl h-10 px-2.5 sm:px-4 font-semibold text-brand bg-brand/5 hover:bg-brand/10 transition-all text-xs sm:text-sm"
+                            >
+                                <span className="hidden sm:inline">Clubs & Committees</span>
+                                <span className="sm:hidden">Clubs</span>
+                            </Button>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate('/')}
-                            className="rounded-xl h-10 px-4 font-semibold text-textSecondary hover:text-textPrimary hover:bg-hoverSoft transition-all"
-                        >
-                            Home
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate('/clubs-committees')}
-                            className="rounded-xl h-10 px-4 font-semibold text-brand bg-brand/5 hover:bg-brand/10 transition-all"
-                        >
-                            Clubs & Committees
-                        </Button>
+                    {/* Right: Utilities */}
+                    <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
                         <ThemeToggle />
+                        
+                        {/* Sign In (Desktop Only) */}
+                        <div className="hidden md:block">
+                            <Button
+                                onClick={onGoToLogin}
+                                className="rounded-xl h-10 px-3 sm:px-6 font-semibold bg-brand text-white hover:bg-brandLink transition-all shadow-md shadow-brand/20 hover:shadow-lg hover:shadow-brand/30 gap-1 text-xs sm:text-sm"
+                            >
+                                <span>Sign In</span>
+                                <ArrowRight size={14} className="hidden sm:inline" />
+                            </Button>
+                        </div>
+
+                        {/* Mobile Hamburger Button */}
                         <Button
-                            onClick={onGoToLogin}
-                            className="rounded-xl h-10 px-5 sm:px-6 font-semibold bg-brand text-white hover:bg-brandLink transition-all shadow-md shadow-brand/20 hover:shadow-lg hover:shadow-brand/30"
+                            variant="ghost"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="md:hidden p-2 rounded-xl border border-borderSoft/40 bg-hoverSoft/20 text-textPrimary hover:bg-hoverSoft/40 transition-all"
+                            aria-label="Toggle menu"
                         >
-                            Sign In
+                            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                         </Button>
                     </div>
                 </div>
+
+                {/* Mobile Dropdown Menu */}
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="md:hidden border-t border-borderSoft/40 bg-bgMain/95 backdrop-blur-xl overflow-hidden"
+                        >
+                            <div className="flex flex-col gap-2 p-4">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        navigate('/');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className="justify-start rounded-xl h-11 px-4 font-semibold text-textSecondary hover:text-textPrimary hover:bg-hoverSoft transition-all text-sm w-full"
+                                >
+                                    Home
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        navigate('/clubs-committees');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className="justify-start rounded-xl h-11 px-4 font-semibold text-brand bg-brand/5 hover:bg-brand/10 transition-all text-sm w-full"
+                                >
+                                    Clubs & Committees
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        onGoToLogin();
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                    className="justify-center rounded-xl h-11 px-4 font-semibold bg-brand text-white hover:bg-brandLink transition-all shadow-md shadow-brand/20 hover:shadow-lg hover:shadow-brand/30 gap-1.5 text-sm w-full mt-2"
+                                >
+                                    <span>Sign In</span>
+                                    <ArrowRight size={16} />
+                                </Button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </header>
 
             {/* ====== Hero Section ====== */}

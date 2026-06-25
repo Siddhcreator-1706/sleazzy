@@ -210,10 +210,10 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
               variant="ghost"
               size="sm"
               onClick={onLogout}
-              className="hidden sm:flex items-center gap-2 text-textMuted hover:text-error rounded-lg h-9 px-3 font-medium transition-all border border-borderSoft/60 bg-card/80 backdrop-blur"
+              className="flex items-center gap-2 text-textMuted hover:text-error rounded-lg h-9 px-2.5 sm:px-3 font-medium transition-all border border-borderSoft/60 bg-card/80 backdrop-blur"
             >
               <LogOut size={15} />
-              <span className="hidden lg:inline">Logout</span>
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </motion.header>

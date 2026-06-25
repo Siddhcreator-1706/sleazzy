@@ -441,7 +441,7 @@ const ClubDashboard: React.FC<ClubDashboardProps> = ({ user }) => {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px] gap-6 sm:gap-8">
         {/* Schedule Calendar */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}

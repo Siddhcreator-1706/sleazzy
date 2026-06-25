@@ -25,7 +25,7 @@ router.get('/public', async (req, res) => {
        WHERE cm.tenure_end_date IS NULL OR cm.tenure_end_date > CURRENT_DATE
        ORDER BY c.name ASC,
                 CASE 
-                  WHEN cm.designation = 'Convenor' THEN 1
+                  WHEN cm.designation = 'Convener' THEN 1
                   WHEN cm.designation = 'Dy. Convener' THEN 2
                   WHEN cm.designation = 'Core' THEN 3
                   ELSE 4
@@ -65,7 +65,7 @@ router.get('/', authMiddleware, async (req, res) => {
        FROM club_members
        WHERE club_id = $1
        ORDER BY CASE 
-                  WHEN designation = 'Convenor' THEN 1
+                  WHEN designation = 'Convener' THEN 1
                   WHEN designation = 'Dy. Convener' THEN 2
                   WHEN designation = 'Core' THEN 3
                   ELSE 4
@@ -157,7 +157,7 @@ router.patch('/:id', authMiddleware, clubOnly, async (req, res) => {
       const newDesignation = (req.body.designation ?? 'Core').trim();
       const oldDesignation = member.designation || 'Core';
       if (newDesignation !== oldDesignation) {
-        const rankMap: Record<string, number> = { 'Convenor': 3, 'Dy. Convener': 2, 'Core': 1 };
+        const rankMap: Record<string, number> = { 'Convener': 3, 'Dy. Convener': 2, 'Core': 1 };
         const oldRank = rankMap[oldDesignation] ?? 0;
         const newRank = rankMap[newDesignation] ?? 0;
         
