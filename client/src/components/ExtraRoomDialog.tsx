@@ -89,6 +89,7 @@ const ExtraRoomDialog: React.FC<ExtraRoomDialogProps> = ({ booking, open, onOpen
                 endTime,
                 expectedAttendees: booking.expectedAttendees,
                 batchId: booking.batchId,
+                event_id: booking.event_id,
             };
 
             await apiRequest('/api/bookings', {

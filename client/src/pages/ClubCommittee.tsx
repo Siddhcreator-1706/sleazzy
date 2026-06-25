@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { User, AppEvent } from '../types';
+
 import { apiRequest } from '../lib/api';
 import { toastError, toastSuccess } from '../lib/toast';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
-import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import RegisterEventDialog from '../components/RegisterEventDialog';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
+import { Calendar as CalendarIcon, Plus, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -18,12 +21,12 @@ interface ClubCommitteeProps {
 const ClubCommittee: React.FC<ClubCommitteeProps> = ({ user }) => {
   const [events, setEvents] = useState<AppEvent[]>([]);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [newEvent, setNewEvent] = useState({ name: '', date: '', venue: '' });
-  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
 
   const isCommittee = user.name.toLowerCase().includes('committee');
   const entityType = isCommittee ? 'Committee' : 'Club';
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const fetchData = async () => {
     try {
@@ -38,24 +41,7 @@ const ClubCommittee: React.FC<ClubCommitteeProps> = ({ user }) => {
     fetchData();
   }, []);
 
-  const handleCreateEvent = async () => {
-    setIsSaving(true);
-    try {
-      await apiRequest('/api/events', {
-        method: 'POST',
-        auth: true,
-        body: newEvent,
-      });
-      toastSuccess('Event created successfully');
-      setIsAddEventOpen(false);
-      setNewEvent({ name: '', date: '', venue: '' });
-      fetchData();
-    } catch (error) {
-      toastError(error, 'Failed to create event');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+
 
   return (
     <div className="space-y-6">
@@ -124,46 +110,12 @@ const ClubCommittee: React.FC<ClubCommitteeProps> = ({ user }) => {
         </div>
       </div>
 
-      <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Register a New Event</DialogTitle>
-            <DialogDescription>
-              Create an event to tie slot bookings to it.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Event Name</Label>
-              <Input
-                value={newEvent.name}
-                onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
-                placeholder="e.g. Annual Tech Fest"
-                className="rounded-xl"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Date</Label>
-              <Input
-                type="date"
-                value={newEvent.date}
-                onChange={e => setNewEvent({ ...newEvent, date: e.target.value })}
-                className="rounded-xl"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddEventOpen(false)} className="rounded-xl">Cancel</Button>
-            <Button 
-              onClick={handleCreateEvent} 
-              disabled={isSaving || !newEvent.name || !newEvent.date}
-              className="rounded-xl bg-brand hover:bg-brand/90 text-white font-semibold"
-            >
-              {isSaving ? 'Creating...' : 'Create Event'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RegisterEventDialog 
+        isOpen={isAddEventOpen} 
+        onOpenChange={setIsAddEventOpen} 
+        currentUser={user}
+        onEventCreated={() => fetchData()}
+      />
     </div>
   );
 };

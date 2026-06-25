@@ -27,6 +27,7 @@ export function getSemesterRange(date: Date): { start: string; end: string } {
 /**
  * Counts the number of distinct co-curricular events (by batch_id) for a given
  * club within a semester range. Bookings with status 'rejected' are excluded.
+ * event_type is resolved via JOIN to the events table through event_id.
  *
  * @param excludeBookingId  Optional booking id to exclude (useful when editing
  * an existing booking so it doesn't count against itself).
@@ -37,45 +38,29 @@ export async function countCoCurricularBookings(
     semesterEnd: string,
     excludeBookingId?: string,
 ): Promise<number> {
-    
-    // 1. Build the base query
+
+    // Count unique events instead of individual booking batches or venues
     let queryStr = `
-        SELECT batch_id 
-        FROM bookings 
-        WHERE club_id = $1 
-          AND event_type = 'co_curricular' 
-          AND status != 'rejected' 
-          AND start_time >= $2 
-          AND start_time <= $3
+        SELECT COUNT(DISTINCT e.id) as count
+        FROM events e
+        WHERE e.club_id = $1 
+          AND e.event_type = 'co_curricular' 
+          AND e.status != 'cancelled' 
+          AND e.date >= $2 
+          AND e.date <= $3
     `;
     const values: any[] = [clubId, semesterStart, semesterEnd];
 
-    // 2. Dynamically append the exclude ID if it was provided
-    if (excludeBookingId) {
-        values.push(excludeBookingId);
-        queryStr += ` AND id != $${values.length}`;
-    }
+    // If an excludeBookingId is passed, we technically should ignore it since the limit
+    // is on the event, but for safety in case it's used elsewhere, we ignore it here
+    // since one event might have multiple bookings. If we are just editing a booking, 
+    // the event already exists and counts as 1.
 
     try {
-        // 3. Execute the query
         const { rows } = await db.query(queryStr, values);
-
-        // Each event may span multiple venues (same batch_id), so we count unique
-        // batch_ids. Bookings without a batch_id are treated as individual events.
-        const batchIds = new Set<string>();
-        let noBatchCount = 0;
-        
-        for (const row of rows) {
-            if (row.batch_id) {
-                batchIds.add(row.batch_id);
-            } else {
-                noBatchCount++;
-            }
-        }
-
-        return batchIds.size + noBatchCount;
+        return parseInt(rows[0].count, 10) || 0;
     } catch (error: any) {
-        throw new Error(`Failed to count co-curricular bookings: ${error.message}`);
+        throw new Error(`Failed to count co-curricular events: ${error.message}`);
     }
 }
 

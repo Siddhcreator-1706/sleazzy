@@ -558,6 +558,14 @@ const AdminDashboard: React.FC = () => {
                         <div className="mt-1 text-sm text-textMuted">
                           Requested Venue(s): <span className="font-semibold text-foreground">{req.venueName || req.venueIds.map(getVenueName).join(', ')}</span> ({req.startTime} - {req.endTime})
                         </div>
+                        {req.issueFlag && (
+                          <div className="mt-2 text-sm bg-warning/10 text-warning border border-warning/20 p-2 rounded-md flex items-start gap-2">
+                            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                            <span>
+                              <strong>Requires Admin Approval:</strong> {req.issueFlag}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2 sm:gap-3">

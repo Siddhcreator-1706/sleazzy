@@ -48,6 +48,8 @@ export interface AppEvent {
   name: string;
   date: string;
   venue: string | null;
+  dynamic_end_date?: string;
+  event_type?: EventType;
   created_at: string;
   updated_at: string;
 }
@@ -75,6 +77,7 @@ export interface Booking {
   endTimeISO?: string;
   venueName?: string;
   event_id?: string;
+  issueFlag?: string | null;
 }
 
 export interface GroupedBooking extends Omit<Booking, 'id' | 'venueId' | 'status'> {
@@ -83,4 +86,5 @@ export interface GroupedBooking extends Omit<Booking, 'id' | 'venueId' | 'status
   venueName: string; // Comma-separated or compound string
   status: BookingStatus | 'partial'; // Support 'partial' for mixed statuses
   bookings: Booking[]; // The original individual items
+  issueFlag?: string | null;
 }
