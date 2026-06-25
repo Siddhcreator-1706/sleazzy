@@ -158,16 +158,27 @@ const AddBookingDialog: React.FC<Props> = ({ open, onOpenChange, onCreated }) =>
             const startDateTime = new Date(`${dateString}T${startTime}:00`);
             const endDateTime = new Date(`${dateString}T${endTime}:00`);
 
+            const createdEvent = await apiRequest<{ id: string }>('/api/events', {
+                method: 'POST',
+                auth: true,
+                body: {
+                    name: eventName.trim(),
+                    date: startDateTime.toISOString(),
+                    end_date: endDateTime.toISOString(),
+                    event_type: eventType || 'open_all',
+                    venue: 'Auto-assigned by Admin',
+                }
+            });
+
             await apiRequest('/api/admin/bookings', {
                 method: 'POST',
                 auth: true,
                 body: {
                     club_id: sbgClubId,
                     venue_ids: selectedVenues,
-                    event_name: eventName.trim(),
+                    event_id: createdEvent.id,
                     start_time: startDateTime.toISOString(),
                     end_time: endDateTime.toISOString(),
-                    event_type: eventType || undefined,
                     expected_attendees: expectedAttendees
                         ? parseInt(expectedAttendees)
                         : undefined,

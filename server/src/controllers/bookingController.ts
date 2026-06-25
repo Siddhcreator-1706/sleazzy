@@ -172,10 +172,14 @@ export const createBooking = async (req: Request, res: Response) => {
   }
 
   const daysGap = (start.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
-  if (daysGap < MIN_DAYS_BY_EVENT[eventType]) {
-    return res.status(400).json({
-      error: `Booking must be made at least ${MIN_DAYS_BY_EVENT[eventType]} days in advance`,
-    });
+  const requiredDays = MIN_DAYS_BY_EVENT[eventType];
+  if (daysGap < requiredDays) {
+    const gapMsg = `Short notice booking (${Math.floor(daysGap)} days advance). Requires ${requiredDays} days advance notice.`;
+    if (!issueFlag) {
+      issueFlag = gapMsg;
+    } else {
+      issueFlag += ` | ${gapMsg}`;
+    }
   }
 
   try {
@@ -226,16 +230,7 @@ export const createBooking = async (req: Request, res: Response) => {
       }
     }
 
-    // 2. Co-curricular limit: max 2 per club per semester
-    if (eventType === 'co_curricular') {
-      const { start: semStart, end: semEnd } = getSemesterRange(start);
-      const count = await countCoCurricularBookings(clubId, semStart, semEnd);
-      if (count >= CO_CURRICULAR_LIMIT) {
-        return res.status(400).json({
-          error: `This club has already booked ${CO_CURRICULAR_LIMIT} co-curricular events this semester. The maximum allowed is ${CO_CURRICULAR_LIMIT}.`,
-        });
-      }
-    }
+    // 2. Co-curricular limit: checked during event registration now
 
     // 3. Check Venue Conflicts (Explicit)
     const { conflict: venueConflict, message: venueMessage } = await performVenueConflictCheck(venueIds, startTime, endTime);

@@ -154,10 +154,95 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
         return days;
     }, [currentMonth]);
 
-    const eventsForDay = useCallback(
-        (day: Date) => events.filter(e => isSameDay(e.startTime, day)),
-        [events],
-    );
+    const calendarWeeks = useMemo(() => {
+        const weeks = [];
+        
+        const sortedEvents = [...events].sort((a, b) => {
+            const durA = a.endTime.getTime() - a.startTime.getTime();
+            const durB = b.endTime.getTime() - b.startTime.getTime();
+            if (durA !== durB) return durB - durA; // Longest first
+            return a.startTime.getTime() - b.startTime.getTime();
+        });
+
+        for (let i = 0; i < calendarDays.length; i += 7) {
+            const weekDays = calendarDays.slice(i, i + 7);
+            const weekStart = weekDays.find(d => d !== null);
+            const weekEnd = [...weekDays].reverse().find(d => d !== null);
+            
+            if (!weekStart || !weekEnd) {
+                weeks.push({ days: weekDays, events: [], maxSlots: 0 });
+                continue;
+            }
+
+            // Boundary dates for this week
+            const ws = new Date(weekStart); ws.setHours(0,0,0,0);
+            const we = new Date(weekEnd); we.setHours(23,59,59,999);
+
+            // Filter events that touch this week
+            const eventsThisWeek = sortedEvents.filter(event => {
+                const es = new Date(event.startTime); es.setHours(0,0,0,0);
+                const ee = new Date(event.endTime); ee.setHours(23,59,59,999);
+                return (es <= we && ee >= ws);
+            });
+
+            // Assign slots
+            const slots: PublicEvent[][] = [];
+            const weekEventsRender = [];
+
+            eventsThisWeek.forEach(event => {
+                const es = new Date(event.startTime); es.setHours(0,0,0,0);
+                const ee = new Date(event.endTime); ee.setHours(23,59,59,999);
+
+                // Find start and end indices within THIS week
+                let startCol = 0;
+                let endCol = 6;
+                weekDays.forEach((day, idx) => {
+                    if (!day) return;
+                    const d = new Date(day); d.setHours(12,0,0,0);
+                    if (isSameDay(d, event.startTime) || (idx === 0 && d > es)) {
+                        startCol = idx;
+                    }
+                    if (isSameDay(d, event.endTime) || (idx === 6 && d < ee)) {
+                        endCol = idx;
+                    }
+                });
+
+                // Find free slot
+                let slot = 0;
+                while (true) {
+                    if (!slots[slot]) slots[slot] = new Array(7).fill(null);
+                    let free = true;
+                    for (let c = startCol; c <= endCol; c++) {
+                        if (slots[slot][c]) { free = false; break; }
+                    }
+                    if (free) break;
+                    slot++;
+                }
+
+                // Fill slot and record render info
+                for (let c = startCol; c <= endCol; c++) {
+                    slots[slot][c] = event;
+                }
+
+                weekEventsRender.push({
+                    event,
+                    slot,
+                    startCol: startCol + 1, // CSS grid is 1-indexed
+                    span: endCol - startCol + 1,
+                    isStart: isSameDay(event.startTime, weekDays[startCol] || new Date()),
+                    isEnd: isSameDay(event.endTime, weekDays[endCol] || new Date())
+                });
+            });
+
+            weeks.push({
+                days: weekDays,
+                events: weekEventsRender,
+                maxSlots: slots.length
+            });
+        }
+        
+        return weeks;
+    }, [calendarDays, events]);
 
     const upcomingEvents = useMemo(
         () => [...events].sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
@@ -351,79 +436,106 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                             <div className="h-8 w-8 border-3 border-brand/30 border-t-brand rounded-full animate-spin" />
                         </div>
                     ) : (
-                        <div className="grid grid-cols-7">
-                            {calendarDays.map((day, idx) => {
-                                if (!day) {
-                                    return (
-                                        <div
-                                            key={`blank-${idx}`}
-                                            className="min-h-[72px] sm:min-h-[110px] border-r border-b border-borderSoft/20 last:border-r-0 bg-hoverSoft/20"
-                                        />
-                                    );
-                                }
+                        <div className="flex flex-col border-x border-borderSoft/30">
+                            {calendarWeeks.map((week, wIdx) => (
+                                <div key={wIdx} className="relative grid grid-cols-7 border-b border-borderSoft/30 last:border-b-0 min-h-[80px] sm:min-h-[120px]">
+                                    
+                                    {/* Background Day Cells */}
+                                    {week.days.map((day, dIdx) => {
+                                        if (!day) {
+                                            return (
+                                                <div
+                                                    key={`blank-${dIdx}`}
+                                                    className="border-r border-borderSoft/20 last:border-r-0 bg-hoverSoft/20"
+                                                />
+                                            );
+                                        }
 
-                                const dayEvents = eventsForDay(day);
-                                const isToday = isSameDay(day, today);
-                                const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
-                                const maxVisible = 2;
-                                const overflow = dayEvents.length - maxVisible;
+                                        const isToday = isSameDay(day, today);
+                                        const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
+                                        const maxVisible = 2;
+                                        
+                                        // Count events on this day using week slots
+                                        const actualEventsCount = week.events.filter(we => we.startCol <= dIdx + 1 && we.startCol + we.span - 1 >= dIdx + 1).length;
+                                        const overflow = actualEventsCount > maxVisible ? actualEventsCount - maxVisible : 0;
 
-                                return (
-                                    <div
-                                        key={day.toISOString()}
-                                        className={`
-                                            min-h-[72px] sm:min-h-[110px] p-1 sm:p-2 border-r border-b border-borderSoft/20 last:border-r-0
-                                            transition-colors cursor-default relative group
-                                            ${isToday ? 'bg-brand/4 dark:bg-brand/6' : ''}
-                                            ${!isCurrentMonth ? 'opacity-40' : ''}
-                                            hover:bg-hoverSoft/40
-                                        `}
-                                    >
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span
+                                        return (
+                                            <div
+                                                key={day.toISOString()}
                                                 className={`
-                                                    inline-flex items-center justify-center text-xs sm:text-sm font-semibold
-                                                    ${isToday
-                                                        ? 'h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-brand text-white shadow-sm shadow-brand/30'
-                                                        : 'text-textPrimary'
-                                                    }
+                                                    p-1 sm:p-2 border-r border-borderSoft/20 last:border-r-0
+                                                    transition-colors cursor-default flex flex-col
+                                                    ${isToday ? 'bg-brand/4 dark:bg-brand/6' : ''}
+                                                    ${!isCurrentMonth ? 'opacity-40' : ''}
+                                                    hover:bg-hoverSoft/40
                                                 `}
                                             >
-                                                {day.getDate()}
-                                            </span>
-                                        </div>
-
-                                        <div className="space-y-0.5 sm:space-y-1">
-                                            {dayEvents.slice(0, maxVisible).map(event => {
-                                                const c = getColor(event.eventType);
-                                                return (
-                                                    <button
-                                                        key={event.id}
-                                                        onClick={() => setSelectedEvent(event)}
+                                                <div className="flex justify-between mb-1">
+                                                    <span
                                                         className={`
-                                                            w-full text-left rounded-md px-1 py-0.5 sm:px-2 sm:py-1 text-[9px] sm:text-xs font-medium truncate
-                                                            border transition-all hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]
-                                                            ${c.bg} ${c.text} ${c.border}
+                                                            inline-flex items-center justify-center text-xs sm:text-sm font-semibold z-20 relative
+                                                            ${isToday
+                                                                ? 'h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-brand text-white shadow-sm shadow-brand/30'
+                                                                : 'text-textPrimary'
+                                                            }
                                                         `}
-                                                        title={event.eventName}
                                                     >
-                                                        <span className="hidden md:inline">{formatTime(event.startTime)} </span>
-                                                        {event.eventName}
+                                                        {day.getDate()}
+                                                    </span>
+                                                </div>
+                                                
+                                                <div className="flex-1" />
+                                                
+                                                {overflow > 0 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const dayEvents = week.events.filter(we => we.startCol <= dIdx + 1 && we.startCol + we.span - 1 >= dIdx + 1).map(we => we.event);
+                                                            setSelectedDayEvents(dayEvents);
+                                                        }}
+                                                        className="w-full text-left text-[10px] sm:text-xs font-semibold text-brand hover:text-brandLink transition-colors px-1.5 z-20 relative mt-1"
+                                                    >
+                                                        +{overflow} more
                                                     </button>
-                                                );
-                                            })}
-                                            {overflow > 0 && (
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Foreground Event Overlays */}
+                                    <div className="absolute top-[28px] sm:top-[36px] left-0 right-0 bottom-0 pointer-events-none grid grid-cols-7 gap-y-1 content-start z-10">
+                                        {week.events.filter(we => we.slot < 2).map((we, eIdx) => {
+                                            const c = getColor(we.event.eventType);
+                                            return (
                                                 <button
-                                                    onClick={() => setSelectedDayEvents(dayEvents)}
-                                                    className="w-full text-left text-[10px] sm:text-xs font-semibold text-brand hover:text-brandLink transition-colors px-1.5"
+                                                    key={`${we.event.id}-${eIdx}`}
+                                                    onClick={() => setSelectedEvent(we.event)}
+                                                    className={`
+                                                        pointer-events-auto block text-left h-[22px] sm:h-[26px] px-1.5 sm:px-2 text-[9px] sm:text-xs font-medium truncate
+                                                        transition-all hover:brightness-95 border
+                                                        ${c.bg} ${c.text} ${c.border}
+                                                        ${we.isStart ? 'rounded-l-md ml-1 sm:ml-2' : 'rounded-l-none border-l-0 ml-0'}
+                                                        ${we.isEnd ? 'rounded-r-md mr-1 sm:mr-2' : 'rounded-r-none border-r-0 mr-0'}
+                                                    `}
+                                                    style={{ 
+                                                        gridColumn: `${we.startCol} / span ${we.span}`,
+                                                        gridRow: we.slot + 1
+                                                    }}
+                                                    title={we.event.eventName}
                                                 >
-                                                    +{overflow} more
+                                                    <span className="truncate block">
+                                                        {(we.isStart || we.startCol === 1) && (
+                                                            <>
+                                                                <span className="hidden md:inline opacity-80 font-bold mr-1">{formatTime(we.event.startTime)}</span>
+                                                                {we.event.eventName}
+                                                            </>
+                                                        )}
+                                                    </span>
                                                 </button>
-                                            )}
-                                        </div>
+                                            );
+                                        })}
                                     </div>
-                                );
-                            })}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -465,14 +577,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                                             className="w-full text-left px-4 sm:px-6 py-3.5 border-b border-borderSoft/20 hover:bg-hoverSoft/50 transition-colors active:bg-hoverSoft"
                                         >
                                             <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <p className="text-sm sm:text-base font-semibold text-textPrimary truncate">{event.eventName}</p>
-                                                    <p className="text-xs sm:text-sm text-textSecondary mt-0.5 truncate">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2 mb-0.5">
+                                                        <p className="text-sm sm:text-base font-semibold text-textPrimary truncate">{event.eventName}</p>
+                                                        {!isSameDay(event.startTime, event.endTime) && (
+                                                            <span className="shrink-0 text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">Multi-Day</span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs sm:text-sm text-textSecondary truncate">
                                                         {event.clubName} · {event.venueName}
                                                     </p>
-                                                    <p className="text-xs text-textMuted mt-1 flex items-center gap-1">
-                                                        <Clock size={12} />
-                                                        {formatTime(event.startTime)} – {formatTime(event.endTime)}
+                                                    <p className="text-xs text-textMuted mt-1 flex items-center gap-1.5">
+                                                        <Clock size={12} className="shrink-0" />
+                                                        <span className="truncate">
+                                                            {isSameDay(event.startTime, event.endTime) 
+                                                                ? `${formatTime(event.startTime)} – ${formatTime(event.endTime)}`
+                                                                : `${formatDayLabel(event.startTime).split(',')[1].trim()} ${formatTime(event.startTime)} – ${formatDayLabel(event.endTime).split(',')[1].trim()} ${formatTime(event.endTime)}`
+                                                            }
+                                                        </span>
                                                     </p>
                                                 </div>
 
@@ -519,8 +641,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                             <div className="p-5 sm:p-6 space-y-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="text-xl font-bold text-textPrimary tracking-tight truncate">
-                                            {selectedEvent.eventName}
+                                        <h3 className="text-xl font-bold text-textPrimary tracking-tight truncate flex items-center gap-2">
+                                            <span className="truncate">{selectedEvent.eventName}</span>
+                                            {!isSameDay(selectedEvent.startTime, selectedEvent.endTime) && (
+                                                <span className="shrink-0 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">Multi-Day</span>
+                                            )}
                                         </h3>
                                         <p className="text-sm text-textSecondary mt-1">{selectedEvent.clubName}</p>
                                     </div>
@@ -539,9 +664,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-textPrimary">
-                                                {selectedEvent.startTime.toLocaleDateString('en-US', {
-                                                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-                                                })}
+                                                {isSameDay(selectedEvent.startTime, selectedEvent.endTime) 
+                                                    ? selectedEvent.startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+                                                    : `${selectedEvent.startTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${selectedEvent.endTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                                                }
                                             </p>
                                             <p className="text-xs text-textSecondary">
                                                 {formatTime(selectedEvent.startTime)} – {formatTime(selectedEvent.endTime)}

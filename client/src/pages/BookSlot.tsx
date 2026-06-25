@@ -30,8 +30,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Badge } from '../components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
 import { Calendar } from '../components/ui/calendar';
+import RegisterEventDialog from '../components/RegisterEventDialog';
 import { TimePicker } from '../components/ui/time-picker';
 import { cn } from '@/lib/utils';
 
@@ -64,17 +64,14 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
   const [metaError, setMetaError] = useState<string | null>(null);
 
   const [warnings, setWarnings] = useState({
-    timeline: '',
     conflict: '',
     venue: '',
     venueType: '' as 'success' | 'warning' | 'info' | '',
     hours: '',
-    coCurricularLimit: ''
+    timeline: ''
   });
 
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [newEvent, setNewEvent] = useState({ name: '', startDate: '', startTime: '', endDate: '', endTime: '', venue: '' });
-  const [isSavingEvent, setIsSavingEvent] = useState(false);
 
   const reloadEvents = async () => {
     try {
@@ -83,49 +80,6 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
       return eventsData;
     } catch (error) {
       console.error('Failed to reload events:', error);
-    }
-  };
-
-  const handleCreateEvent = async () => {
-    setIsSavingEvent(true);
-    try {
-      const startDateTime = new Date(`${newEvent.startDate}T${newEvent.startTime || '00:00'}:00`).toISOString();
-      const endDateTime = new Date(`${newEvent.endDate || newEvent.startDate}T${newEvent.endTime || '23:59'}:00`).toISOString();
-
-      const created = await apiRequest<{ id: string; name: string; date: string }>('/api/events', {
-        method: 'POST',
-        auth: true,
-        body: {
-          name: newEvent.name,
-          date: startDateTime,
-          end_date: endDateTime,
-          venue: newEvent.venue,
-        },
-      });
-      toastSuccess('Event registered successfully');
-      setIsAddEventOpen(false);
-      setNewEvent({ name: '', startDate: '', startTime: '', endDate: '', endTime: '', venue: '' });
-      // Reload the events list and pre-fill/select the newly created event
-      const updatedEvents = await reloadEvents();
-      if (updatedEvents && created?.id) {
-        setFormData(prev => ({
-          ...prev,
-          event_id: created.id,
-          date: created.date ? created.date.split('T')[0] : prev.date,
-          endDate: created.date ? created.date.split('T')[0] : prev.endDate,
-        }));
-        if (created.date) {
-          const d = new Date(created.date);
-          if (!isNaN(d.getTime())) {
-            setSelectedDate(d);
-            setSelectedEndDate(d);
-          }
-        }
-      }
-    } catch (error) {
-      toastError(error, 'Failed to register event');
-    } finally {
-      setIsSavingEvent(false);
     }
   };
 
@@ -242,6 +196,32 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
     }
   }, [selectedEndDate]);
 
+  useEffect(() => {
+    if (!formData.date || !formData.event_id) {
+      setWarnings(prev => ({ ...prev, timeline: '' }));
+      return;
+    }
+    const evt = events.find(e => e.id === formData.event_id);
+    if (!evt || !evt.event_type) return;
+
+    const eventDate = new Date(formData.date);
+    const diffDays = (eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    
+    let reqDays = 0;
+    if (evt.event_type === 'co_curricular') reqDays = 14;
+    else if (evt.event_type === 'open_all') reqDays = 7;
+    else if (evt.event_type === 'closed_club') reqDays = 1;
+
+    if (diffDays < reqDays) {
+      setWarnings(prev => ({ 
+        ...prev, 
+        timeline: `Short notice booking (${Math.floor(diffDays)} days). Rule: ${reqDays} days advance notice. This booking will trigger the issue flag and require Admin Approval.` 
+      }));
+    } else {
+      setWarnings(prev => ({ ...prev, timeline: '' }));
+    }
+  }, [formData.date, formData.event_id, events]);
+
   // Parse date string to Date object for Calendar
   useEffect(() => {
     if (formData.date) setSelectedDate(new Date(formData.date));
@@ -272,28 +252,6 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
     if (normalized) return normalized;
     return VENUES.find(v => v.id === id)?.category;
   };
-
-  // Timeline Validation
-  useEffect(() => {
-    if (!formData.date) return;
-
-    const today = new Date();
-    const selectedDate = new Date(formData.date);
-    const diffTime = selectedDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    let warningMsg = '';
-
-    if (formData.eventType === 'co_curricular' && diffDays < 14) {
-      warningMsg = 'Co-curricular events must be booked at least 14 days in advance.';
-    } else if (formData.eventType === 'open_all' && diffDays < 7) {
-      warningMsg = 'Open-for-All events must be booked at least 7 days in advance.';
-    } else if (formData.eventType === 'closed_club' && diffDays < 1) {
-      warningMsg = 'Closed club events must be booked at least 1 day in advance.';
-    }
-
-    setWarnings(prev => ({ ...prev, timeline: warningMsg }));
-  }, [formData.date, formData.eventType]);
 
   // Venue Permission Logic
   useEffect(() => {
@@ -357,7 +315,7 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
           // Restricted block is 08:00 to 18:00 (8:00 AM to 6:00 PM IST)
           // Overlap condition: activeStart < RestrictedEnd AND activeEnd > RestrictedStart
           if (activeStart < "18:00" && activeEnd > "08:00") {
-            errorMsg = "On weekdays, bookings are not allowed between 8:00 AM and 6:00 PM (IST). Your selection overlaps with these restricted academic hours.";
+            errorMsg = "On weekdays, bookings are not allowed between 8:00 AM and 6:00 PM (IST). Your selection overlaps with these restricted academic hours. (Requires Admin Approval)";
             break;
           }
         }
@@ -411,47 +369,6 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
     checkConflicts();
   }, [formData.date, formData.endDate, formData.startTime, formData.endTime, formData.clubName, venues]);
 
-  // Co-curricular limit check
-  useEffect(() => {
-    const selectedEvent = events.find(e => e.id === formData.event_id);
-    const eventType = selectedEvent?.event_type;
-
-    if (eventType !== 'co_curricular' || !formData.clubName) {
-      setWarnings(prev => ({ ...prev, coCurricularLimit: '' }));
-      return;
-    }
-
-    const checkLimit = async () => {
-      try {
-        const selectedClub = clubs.find(c => c.name === formData.clubName);
-        if (!selectedClub) return;
-
-        const { count, limit } = await apiRequest<{ count: number; limit: number }>(
-          `/api/bookings/co-curricular-count?clubId=${selectedClub.id}`,
-          { auth: true }
-        );
-
-        if (count >= limit) {
-          setWarnings(prev => ({
-            ...prev,
-            coCurricularLimit: `This club has already booked ${limit} co-curricular events this semester. No more are allowed.`
-          }));
-        } else {
-          setWarnings(prev => ({
-            ...prev,
-            coCurricularLimit: count === limit - 1
-              ? `Warning: This will be the last co-curricular event allowed this semester (${count}/${limit} used).`
-              : ''
-          }));
-        }
-      } catch (err) {
-        console.error('Failed to check co-curricular limit:', err);
-      }
-    };
-
-    checkLimit();
-  }, [formData.event_id, formData.clubName, clubs, events]);
-
   const handleChange = (name: string, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -471,8 +388,8 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
     e.preventDefault();
 
     const isSelectedVenueBusy = formData.venueIds.some(id => busyVenueIds.includes(id));
-    if (warnings.timeline || isSelectedVenueBusy || warnings.hours || warnings.coCurricularLimit?.startsWith('This club has already')) {
-      toastError('Please resolve the warnings before submitting.');
+    if (isSelectedVenueBusy) {
+      toastError('Please resolve the venue conflict before submitting.');
       return;
     }
 
@@ -520,12 +437,11 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
       setSelectedDate(undefined);
       setSelectedEndDate(undefined);
       setWarnings({
-        timeline: '',
         conflict: '',
         venue: '',
         venueType: '',
         hours: '',
-        coCurricularLimit: ''
+        timeline: ''
       });
 
     } catch (error) {
@@ -537,7 +453,7 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
   };
 
   const isSelectedVenueBusy = formData.venueIds.some(id => busyVenueIds.includes(id));
-  const hasErrors = !!warnings.timeline || isSelectedVenueBusy || !!warnings.hours || !!warnings.coCurricularLimit?.startsWith('This club has already');
+  const hasErrors = isSelectedVenueBusy;
 
   return (
     <motion.div
@@ -640,21 +556,7 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
                       </div>
                     </div>
                   </div>
-                  {warnings.coCurricularLimit && (
-                    <div className={`p-4 rounded-lg border shadow-sm transition-all ${warnings.coCurricularLimit.startsWith('This club has already')
-                      ? 'bg-error/5 border-error/30'
-                      : 'bg-warning/5 border-warning/30'
-                      }`}>
-                      <div className="flex items-start gap-3">
-                        <div className={`h-2 w-2 rounded-full mt-2 shrink-0 ${warnings.coCurricularLimit.startsWith('This club has already') ? 'bg-red-500' : 'bg-amber-500'
-                          }`} />
-                        <div>
-                          <span className="font-semibold block text-textPrimary text-sm mb-1">Co-curricular Limit</span>
-                          <p className="text-xs text-textSecondary leading-relaxed">{warnings.coCurricularLimit}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               </div>
 
@@ -807,7 +709,7 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
                           className={cn(
                             "w-full h-10 justify-start text-left font-medium border-borderSoft hover:bg-hoverSoft/50 transition-all bg-card text-textPrimary rounded-md shadow-sm",
                             !formData.date && "text-textMuted",
-                            warnings.timeline && "border-error/50 ring-1 ring-error"
+                            warnings.timeline && "border-warning/50 ring-1 ring-warning"
                           )}
                           onClick={() => setDatePickerOpen(true)}
                         >
@@ -882,7 +784,7 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
 
                   {(warnings.timeline) && (
                     <div className="sm:col-span-2">
-                      <p className="text-xs text-error font-semibold flex items-center gap-1.5 bg-error/5 p-2.5 rounded-lg border border-error/20">
+                      <p className="text-xs text-warning font-semibold flex items-center gap-1.5 bg-warning/10 p-2.5 rounded-lg border border-warning/30">
                         <AlertTriangle size={14} className="shrink-0" /> {warnings.timeline}
                       </p>
                     </div>
@@ -1112,10 +1014,10 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
               <div className="pt-8 border-t border-borderSoft/40">
                 <Button
                   type="submit"
-                  disabled={hasErrors || isSubmitting || !formData.eventName || !formData.date || !formData.startTime || !formData.endTime || formData.venueIds.length === 0}
+                  disabled={hasErrors || isSubmitting || !formData.event_id || !formData.date || !formData.startTime || !formData.endTime || formData.venueIds.length === 0}
                   className={cn(
                     "w-full h-12 text-base font-bold rounded-lg shadow-sm transition-transform flex items-center justify-center gap-2",
-                    hasErrors || isSubmitting || !formData.eventName || !formData.date || !formData.startTime || !formData.endTime || formData.venueIds.length === 0
+                    hasErrors || isSubmitting || !formData.event_id || !formData.date || !formData.startTime || !formData.endTime || formData.venueIds.length === 0
                       ? "bg-borderSoft text-textMuted cursor-not-allowed"
                       : "bg-brand text-bgMain hover:scale-[1.02] active:scale-[0.98]"
                   )}
@@ -1137,7 +1039,7 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
                     ⚠️ Please resolve the warnings above to proceed.
                   </p>
                 )}
-                {!formData.eventName || !formData.date || !formData.startTime || !formData.endTime || formData.venueIds.length === 0 ? (
+                {!formData.event_id || !formData.date || !formData.startTime || !formData.endTime || formData.venueIds.length === 0 ? (
                   <p className="text-center text-textMuted text-sm mt-4 font-medium">
                     📝 Please fill in all required fields to submit.
                   </p>
@@ -1149,84 +1051,15 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
         </CardContent>
       </motion.div>
 
-      {/* Dialog for Register Event */}
-      <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-borderSoft">
-          <DialogHeader>
-            <DialogTitle className="text-textPrimary">Register a New Event</DialogTitle>
-            <DialogDescription className="text-textMuted">
-              Create an event to tie slot bookings to it.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="event-name-dialog" className="text-textSecondary">Event Name *</Label>
-              <Input
-                id="event-name-dialog"
-                value={newEvent.name}
-                onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
-                placeholder="e.g. Annual Tech Fest"
-                className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="event-sdate-dialog" className="text-textSecondary">Start Date *</Label>
-                <Input
-                  id="event-sdate-dialog"
-                  type="date"
-                  value={newEvent.startDate}
-                  onChange={e => setNewEvent({ ...newEvent, startDate: e.target.value })}
-                  className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="event-stime-dialog" className="text-textSecondary">Start Time</Label>
-                <Input
-                  id="event-stime-dialog"
-                  type="time"
-                  value={newEvent.startTime}
-                  onChange={e => setNewEvent({ ...newEvent, startTime: e.target.value })}
-                  className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="event-edate-dialog" className="text-textSecondary">End Date</Label>
-                <Input
-                  id="event-edate-dialog"
-                  type="date"
-                  value={newEvent.endDate}
-                  onChange={e => setNewEvent({ ...newEvent, endDate: e.target.value })}
-                  className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="event-etime-dialog" className="text-textSecondary">End Time</Label>
-                <Input
-                  id="event-etime-dialog"
-                  type="time"
-                  value={newEvent.endTime}
-                  onChange={e => setNewEvent({ ...newEvent, endTime: e.target.value })}
-                  className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsAddEventOpen(false)} className="rounded-xl border-borderSoft text-textSecondary hover:bg-hoverSoft">Cancel</Button>
-            <Button 
-              type="button"
-              onClick={handleCreateEvent} 
-              disabled={isSavingEvent || !newEvent.name || !newEvent.startDate}
-              className="rounded-xl bg-brand hover:bg-brand/90 text-white font-semibold"
-            >
-              {isSavingEvent ? 'Registering...' : 'Register Event'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RegisterEventDialog 
+        isOpen={isAddEventOpen} 
+        onOpenChange={setIsAddEventOpen} 
+        currentUser={currentUser}
+        onEventCreated={(createdEvent) => {
+          setEvents(prev => [createdEvent, ...prev]);
+          setFormData(prev => ({ ...prev, event_id: createdEvent.id }));
+        }}
+      />
     </motion.div>
   );
 };

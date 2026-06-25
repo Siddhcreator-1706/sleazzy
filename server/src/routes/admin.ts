@@ -233,14 +233,7 @@ router.post('/bookings', async (req, res) => {
     const event_name = fetchedEventRows[0].name;
     const event_type = fetchedEventRows[0].event_type;
 
-    if (event_type === 'co_curricular') {
-      const eventDate = new Date(start_time);
-      const { start: semStart, end: semEnd } = getSemesterRange(eventDate);
-      const count = await countCoCurricularBookings(club_id, semStart, semEnd);
-      if (count >= CO_CURRICULAR_LIMIT) {
-        return res.status(400).json({ error: `Limit of ${CO_CURRICULAR_LIMIT} co-curricular events reached.` });
-      }
-    }
+    // Admin endpoint bypasses co-curricular limits.
 
     const { randomUUID } = await import('crypto');
     const batchId = randomUUID();

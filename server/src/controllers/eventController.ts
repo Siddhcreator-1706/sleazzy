@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { db } from '../db';
 import { getClubForUser } from '../utils/clubAuth';
 import { checkPendingEventReports } from '../services/eventReportService';
+import { getSemesterRange, countCoCurricularBookings, CO_CURRICULAR_LIMIT } from '../services/semesterUtils';
 
 export const createEvent = async (req: Request, res: Response) => {
   const { name, date, venue, end_date, event_type } = req.body;
@@ -17,6 +18,26 @@ export const createEvent = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Invalid event type' });
   }
 
+  const isAdmin = req.user?.role === 'admin';
+
+  if (!isAdmin) {
+    type EventType = 'co_curricular' | 'open_all' | 'closed_club';
+    const MIN_DAYS_BY_EVENT: Record<EventType, number> = {
+      co_curricular: 14,
+      open_all: 7,
+      closed_club: 1,
+    };
+
+    const eventStartDate = new Date(date);
+    const daysGap = (eventStartDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    
+    if (daysGap < MIN_DAYS_BY_EVENT[finalEventType as EventType]) {
+      return res.status(400).json({
+        error: `Event registration must be made at least ${MIN_DAYS_BY_EVENT[finalEventType as EventType]} days in advance.`,
+      });
+    }
+  }
+
   try {
     const club = await getClubForUser(req);
     if (!club) {
@@ -25,8 +46,24 @@ export const createEvent = async (req: Request, res: Response) => {
 
     // Check if the club is blocked due to pending event reports
     const { blocked, message: blockMessage } = await checkPendingEventReports(club.id);
-    if (blocked) {
+    if (blocked && !isAdmin) {
       return res.status(403).json({ error: blockMessage });
+    }
+
+    if (!isAdmin && finalEventType === 'co_curricular') {
+      const start = new Date(date);
+      const { start: semStart, end: semEnd } = getSemesterRange(start);
+      // We check existing events for this club that are co-curricular in the same semester.
+      // Alternatively, the limit could be on events, not bookings. The user said "cocurricular event registration limit must be check".
+      // Let's use the existing countCoCurricularBookings, which counts bookings, or just query events directly.
+      // `countCoCurricularBookings` in `semesterUtils` actually counts events or bookings?
+      // Wait, let's just use the existing function:
+      const count = await countCoCurricularBookings(club.id, semStart, semEnd);
+      if (count >= CO_CURRICULAR_LIMIT) {
+        return res.status(400).json({
+          error: `This club has already registered ${CO_CURRICULAR_LIMIT} co-curricular events this semester. The maximum allowed is ${CO_CURRICULAR_LIMIT}.`,
+        });
+      }
     }
 
     const { rows } = await db.query(

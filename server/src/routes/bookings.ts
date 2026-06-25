@@ -237,9 +237,17 @@ router.get('/campus-bookings', authMiddleware, async (_req, res) => {
 
 // Returns the co-curricular booking count for a club in the current semester
 router.get('/bookings/co-curricular-count', authMiddleware, async (req, res) => {
-  const clubId = req.query.clubId as string;
+  let clubId = req.query.clubId as string;
+  
+  if (!clubId && req.user) {
+    const { rows } = await db.query('SELECT id FROM clubs WHERE email = $1', [req.user.email]);
+    if (rows.length > 0) {
+      clubId = rows[0].id;
+    }
+  }
+
   if (!clubId) {
-    return res.status(400).json({ error: 'clubId is required' });
+    return res.status(400).json({ error: 'clubId is required or user must be associated with a club' });
   }
 
   try {

@@ -9,12 +9,18 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Skeleton } from '../components/ui/skeleton';
-import { Calendar, Clock, MapPin, Edit, Trash2, Plus, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, MapPin, Edit, Trash2, Plus, AlertTriangle, RefreshCw, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
+import RegisterEventDialog from '../components/RegisterEventDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { AppEvent } from '../types';
+import { AppEvent, User } from '../types';
+import { cn } from '../lib/utils';
 
-const ManageEvents: React.FC = () => {
+interface ManageEventsProps {
+  currentUser?: User;
+}
+
+const ManageEvents: React.FC<ManageEventsProps> = ({ currentUser }) => {
   const [events, setEvents] = useState<AppEvent[]>([]);
   const [venues, setVenues] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,8 +32,9 @@ const ManageEvents: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [newEvent, setNewEvent] = useState<{ name: string; startDate: string; startTime: string; endDate: string; endTime: string; venue: string[]; event_type: string }>({ name: '', startDate: '', startTime: '', endDate: '', endTime: '', venue: ['Online'], event_type: 'open_all' });
-  const [isSavingEvent, setIsSavingEvent] = useState(false);
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'ongoing' | 'past'>('upcoming');
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const fetchData = React.useCallback(async () => {
     setIsLoading(true);
@@ -51,6 +58,25 @@ const ManageEvents: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const categorizedEvents = React.useMemo(() => {
+    const now = new Date();
+    const result = { upcoming: [] as AppEvent[], ongoing: [] as AppEvent[], past: [] as AppEvent[] };
+    events.forEach(event => {
+      const startDate = new Date(event.date);
+      const endDate = event.dynamic_end_date ? new Date(event.dynamic_end_date) : startDate;
+      if (endDate < now) {
+        result.past.push(event);
+      } else if (startDate <= now && endDate >= now) {
+        result.ongoing.push(event);
+      } else {
+        result.upcoming.push(event);
+      }
+    });
+    return result;
+  }, [events]);
+
+  const displayedEvents = categorizedEvents[activeTab];
 
   const handleEditClick = (event: AppEvent) => {
     setEditingEvent(event);
@@ -100,40 +126,12 @@ const ManageEvents: React.FC = () => {
     }
   };
 
-  const handleCreateEvent = async () => {
-    setIsSavingEvent(true);
-    try {
-      const startDateTime = new Date(`${newEvent.startDate}T${newEvent.startTime || '00:00'}:00`).toISOString();
-      const endDateTime = new Date(`${newEvent.endDate || newEvent.startDate}T${newEvent.endTime || '23:59'}:00`).toISOString();
-
-      await apiRequest('/api/events', {
-        method: 'POST',
-        auth: true,
-        body: {
-          name: newEvent.name,
-          date: startDateTime,
-          end_date: endDateTime,
-          venue: newEvent.venue.join(', '),
-          event_type: newEvent.event_type,
-        },
-      });
-      toastInfo('Event registered successfully');
-      setIsAddEventOpen(false);
-      setNewEvent({ name: '', startDate: '', startTime: '', endDate: '', endTime: '', venue: ['Online'], event_type: 'open_all' });
-      fetchData();
-    } catch (err) {
-      toastError(err, 'Failed to register event');
-    } finally {
-      setIsSavingEvent(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (eventId: string) => {
     if (!window.confirm('Are you sure you want to completely delete this event? This action will archive and remove all associated bookings and reports. It cannot be undone.')) {
       return;
     }
     try {
-      await apiRequest(`/api/events/${id}`, { method: 'DELETE', auth: true });
+      await apiRequest(`/api/events/${eventId}`, { method: 'DELETE', auth: true });
       toastInfo('Event deleted successfully');
       fetchData();
     } catch (err) {
@@ -185,9 +183,30 @@ const ManageEvents: React.FC = () => {
           <p className="text-textMuted text-lg font-semibold">No registered events found.</p>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {events.map((event, index) => {
-            const startDate = new Date(event.date);
+        <div className="grid gap-6">
+          <div className="flex bg-card p-1 rounded-xl border border-borderSoft w-fit">
+            {['upcoming', 'ongoing', 'past'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={cn(
+                  "px-6 py-2.5 rounded-lg text-sm font-semibold capitalize transition-all",
+                  activeTab === tab ? "bg-brand text-white shadow-sm" : "text-textMuted hover:text-textPrimary"
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {displayedEvents.length === 0 ? (
+            <Card className="border border-borderSoft rounded-lg p-12 text-center bg-card shadow-sm">
+              <p className="text-textMuted text-base font-medium">No {activeTab} events found.</p>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {displayedEvents.map((event, index) => {
+                const startDate = new Date(event.date);
             const endDate = event.dynamic_end_date ? new Date(event.dynamic_end_date) : startDate;
             
             return (
@@ -230,11 +249,13 @@ const ManageEvents: React.FC = () => {
             );
           })}
         </div>
+        )}
+      </div>
       )}
 
       {/* Edit Event Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-borderSoft text-textPrimary">
+        <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-borderSoft text-textPrimary overflow-y-auto max-h-[85vh]">
           <DialogHeader>
             <DialogTitle>Edit Event</DialogTitle>
             <DialogDescription>Modify event details and dates.</DialogDescription>
@@ -268,6 +289,7 @@ const ManageEvents: React.FC = () => {
                   type="date"
                   value={editForm.date}
                   onChange={e => setEditForm({ ...editForm, date: e.target.value })}
+                  min={todayStr}
                   className="rounded-xl"
                 />
               </div>
@@ -288,6 +310,7 @@ const ManageEvents: React.FC = () => {
                   type="date"
                   value={editForm.endDate}
                   onChange={e => setEditForm({ ...editForm, endDate: e.target.value })}
+                  min={editForm.date || todayStr}
                   className="rounded-xl"
                 />
               </div>
@@ -342,128 +365,12 @@ const ManageEvents: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for Register Event */}
-      <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-borderSoft text-textPrimary">
-          <DialogHeader>
-            <DialogTitle>Register a New Event</DialogTitle>
-            <DialogDescription className="text-textMuted">
-              Create an event to tie slot bookings to it.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="event-name-dialog" className="text-textSecondary">Event Name *</Label>
-              <Input
-                id="event-name-dialog"
-                value={newEvent.name}
-                onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
-                placeholder="e.g. Annual Tech Fest"
-                className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-textSecondary">Event Type *</Label>
-              <Select value={newEvent.event_type} onValueChange={val => setNewEvent({ ...newEvent, event_type: val })}>
-                <SelectTrigger className="rounded-xl bg-bgMain border-borderSoft text-textPrimary">
-                  <SelectValue placeholder="Select event type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="open_all">Open for All</SelectItem>
-                  <SelectItem value="co_curricular">Co-Curricular Activity</SelectItem>
-                  <SelectItem value="closed_club">Closed Club Event</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="event-sdate-dialog" className="text-textSecondary">Start Date *</Label>
-                <Input
-                  id="event-sdate-dialog"
-                  type="date"
-                  value={newEvent.startDate}
-                  onChange={e => setNewEvent({ ...newEvent, startDate: e.target.value })}
-                  className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="event-stime-dialog" className="text-textSecondary">Start Time</Label>
-                <Input
-                  id="event-stime-dialog"
-                  type="time"
-                  value={newEvent.startTime}
-                  onChange={e => setNewEvent({ ...newEvent, startTime: e.target.value })}
-                  className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="event-edate-dialog" className="text-textSecondary">End Date</Label>
-                <Input
-                  id="event-edate-dialog"
-                  type="date"
-                  value={newEvent.endDate}
-                  onChange={e => setNewEvent({ ...newEvent, endDate: e.target.value })}
-                  className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="event-etime-dialog" className="text-textSecondary">End Time</Label>
-                <Input
-                  id="event-etime-dialog"
-                  type="time"
-                  value={newEvent.endTime}
-                  onChange={e => setNewEvent({ ...newEvent, endTime: e.target.value })}
-                  className="rounded-xl bg-bgMain border-borderSoft text-textPrimary"
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-textSecondary">Venues * (Select one or more)</Label>
-              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border border-borderSoft rounded-xl bg-bgMain">
-                {[{ id: 'online', name: 'Online' }, ...venues].map(v => {
-                  const isSelected = newEvent.venue.includes(v.name);
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => {
-                        if (v.name === 'Online') {
-                          setNewEvent({ ...newEvent, venue: ['Online'] });
-                        } else {
-                          if (isSelected) {
-                            const newVenues = newEvent.venue.filter(n => n !== v.name);
-                            setNewEvent({ ...newEvent, venue: newVenues.length === 0 ? ['Online'] : newVenues });
-                          } else {
-                            setNewEvent({ ...newEvent, venue: [...newEvent.venue.filter(n => n !== 'Online'), v.name] });
-                          }
-                        }
-                      }}
-                      className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                        isSelected ? 'bg-brand text-white border-brand' : 'bg-transparent text-textSecondary border-borderSoft hover:border-brand/50'
-                      }`}
-                    >
-                      {v.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsAddEventOpen(false)} className="rounded-xl border-borderSoft text-textSecondary hover:bg-hoverSoft">Cancel</Button>
-            <Button 
-              type="button"
-              onClick={handleCreateEvent} 
-              disabled={isSavingEvent || !newEvent.name || !newEvent.startDate || newEvent.venue.length === 0}
-              className="rounded-xl bg-brand hover:bg-brand/90 text-white font-semibold"
-            >
-              {isSavingEvent ? 'Registering...' : 'Register Event'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RegisterEventDialog 
+        isOpen={isAddEventOpen} 
+        onOpenChange={setIsAddEventOpen} 
+        currentUser={currentUser}
+        onEventCreated={() => fetchData()}
+      />
     </motion.div>
   );
 };

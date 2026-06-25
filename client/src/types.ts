@@ -49,6 +49,7 @@ export interface AppEvent {
   date: string;
   venue: string | null;
   dynamic_end_date?: string;
+  event_type?: EventType;
   created_at: string;
   updated_at: string;
 }

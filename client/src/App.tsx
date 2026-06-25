@@ -190,7 +190,7 @@ const App: React.FC = () => {
 
             <Route path="/book" element={<BookSlot currentUser={user} />} />
             <Route path="/my-bookings" element={<MyBookings />} />
-            <Route path="/manage-events" element={<ManageEvents />} />
+            <Route path="/manage-events" element={<ManageEvents currentUser={user} />} />
             <Route path="/event-reports" element={<EventReports />} />
             <Route path="/members" element={<ClubMembers user={user} />} />
             <Route path="/committee" element={user.role === 'club' ? <ClubCommittee user={user} /> : <Navigate to="/" replace />} />

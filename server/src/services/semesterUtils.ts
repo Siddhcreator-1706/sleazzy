@@ -39,42 +39,28 @@ export async function countCoCurricularBookings(
     excludeBookingId?: string,
 ): Promise<number> {
 
-    // event_type is now on the events table — JOIN through event_id
+    // Count unique events instead of individual booking batches or venues
     let queryStr = `
-        SELECT b.batch_id 
-        FROM bookings b
-        JOIN events e ON b.event_id = e.id
-        WHERE b.club_id = $1 
+        SELECT COUNT(DISTINCT e.id) as count
+        FROM events e
+        WHERE e.club_id = $1 
           AND e.event_type = 'co_curricular' 
-          AND b.status != 'rejected' 
-          AND b.start_time >= $2 
-          AND b.start_time <= $3
+          AND e.status != 'cancelled' 
+          AND e.date >= $2 
+          AND e.date <= $3
     `;
     const values: any[] = [clubId, semesterStart, semesterEnd];
 
-    if (excludeBookingId) {
-        values.push(excludeBookingId);
-        queryStr += ` AND b.id != $${values.length}`;
-    }
+    // If an excludeBookingId is passed, we technically should ignore it since the limit
+    // is on the event, but for safety in case it's used elsewhere, we ignore it here
+    // since one event might have multiple bookings. If we are just editing a booking, 
+    // the event already exists and counts as 1.
 
     try {
         const { rows } = await db.query(queryStr, values);
-
-        // Each event may span multiple venues (same batch_id), count unique batch_ids.
-        const batchIds = new Set<string>();
-        let noBatchCount = 0;
-        
-        for (const row of rows) {
-            if (row.batch_id) {
-                batchIds.add(row.batch_id);
-            } else {
-                noBatchCount++;
-            }
-        }
-
-        return batchIds.size + noBatchCount;
+        return parseInt(rows[0].count, 10) || 0;
     } catch (error: any) {
-        throw new Error(`Failed to count co-curricular bookings: ${error.message}`);
+        throw new Error(`Failed to count co-curricular events: ${error.message}`);
     }
 }
 
