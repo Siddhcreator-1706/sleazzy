@@ -127,7 +127,7 @@ export default function AdminEventReports() {
 
         {tab === 'tracking' && (
           <div className="space-y-4 overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full min-w-[600px] sm:min-w-0 text-sm text-left">
               <thead className="text-xs uppercase bg-card/50 text-textMuted">
                 <tr>
                   <th className="px-4 py-3">Event</th>
@@ -165,7 +165,7 @@ export default function AdminEventReports() {
 
         {tab === 'exempt' && (
           <div className="space-y-4 overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full min-w-[600px] sm:min-w-0 text-sm text-left">
               <thead className="text-xs uppercase bg-card/50 text-textMuted">
                 <tr>
                   <th className="px-4 py-3">Event</th>

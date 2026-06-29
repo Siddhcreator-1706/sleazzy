@@ -52,7 +52,8 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
     startTime: '',
     endTime: '',
     venueIds: [] as string[],
-    event_id: ''
+    event_id: '',
+    permissionsLink: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -432,7 +433,8 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
         startTime: '',
         endTime: '',
         venueIds: [],
-        event_id: ''
+        event_id: '',
+        permissionsLink: ''
       });
       setSelectedDate(undefined);
       setSelectedEndDate(undefined);
@@ -1006,6 +1008,28 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
                       </AlertDescription>
                     </Alert>
                   )}
+                </div>
+              </section>
+
+              <Separator className="bg-borderSoft/40" />
+
+              {/* Permissions */}
+              <section className="space-y-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-8 w-1.5 bg-gradient-to-b from-brand to-brandLink rounded-full" />
+                  <h2 className="text-2xl font-bold text-textPrimary">List of Permissions (if any)</h2>
+                </div>
+                <div className="space-y-2.5">
+                  <Label htmlFor="permissionsLink" className="text-textSecondary font-semibold text-sm">Drive Link to Document (Optional)</Label>
+                  <Input
+                    id="permissionsLink"
+                    type="url"
+                    placeholder="https://docs.google.com/..."
+                    value={formData.permissionsLink}
+                    onChange={(e) => handleChange('permissionsLink', e.target.value)}
+                    className="h-11 border-borderSoft focus-visible:ring-brand focus-visible:border-brand rounded-xl shadow-sm"
+                  />
+                  <p className="text-xs text-textMuted mt-1">If your event requires specific permissions (e.g. from faculty or administration), provide a link to the document here.</p>
                 </div>
               </section>
 

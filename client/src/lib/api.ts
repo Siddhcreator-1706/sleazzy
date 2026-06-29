@@ -117,6 +117,7 @@ export type ApiBooking = {
   is_public?: boolean;
   issue_flag?: string | null;
   event_id?: string;
+  permissions_link?: string | null;
 };
 
 export const mapBooking = (booking: ApiBooking) => {
@@ -143,6 +144,7 @@ export const mapBooking = (booking: ApiBooking) => {
     clubId: booking.club_id,
     issueFlag: booking.issue_flag,
     event_id: booking.event_id,
+    permissionsLink: booking.permissions_link,
   };
 };
 
@@ -222,6 +224,7 @@ export const groupBookings = (bookings: Booking[], venues: ApiVenue[] = []): Gro
       }
       
       existing.issueFlag = existing.bookings.find(b => b.issueFlag)?.issueFlag || null;
+      existing.permissionsLink = existing.bookings.find(b => b.permissionsLink)?.permissionsLink || null;
     } else {
       grouped.set(key, {
         ...b,
