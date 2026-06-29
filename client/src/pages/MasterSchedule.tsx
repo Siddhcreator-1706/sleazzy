@@ -301,9 +301,16 @@ const MasterSchedule: React.FC = () => {
                                                     </div>
 
                                                     <div className="mt-2 flex items-center justify-between">
-                                                        <span className="text-xs font-medium text-primary">
-                                                            Organized by {booking.clubName}
-                                                        </span>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-xs font-medium text-primary">
+                                                                Organized by {booking.clubName}
+                                                            </span>
+                                                            {booking.permissionsLink && (
+                                                                <a href={booking.permissionsLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand hover:underline font-medium">
+                                                                    🔗 View Permissions
+                                                                </a>
+                                                            )}
+                                                        </div>
                                                         <button
                                                             onClick={() => {
                                                                 setEditBooking(booking);

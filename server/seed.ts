@@ -2,13 +2,15 @@ import dotenv from 'dotenv';
 import { Client } from 'pg';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcrypt';
+import * as xlsx from 'xlsx';
+import path from 'path';
 
 dotenv.config();
 
 const ADMIN_EMAIL = 'sbg_convener@dau.ac.in';
 const OFFICIAL_EMAIL_DOMAIN = '@dau.ac.in';
 
-// Official clubs/committees array from client constants
+// Official clubs/committees array from client constants - used to map group categories
 const CLUBS = [
   // Group A (Academic/Tech)
   { name: 'AI Club', group: 'A' },
@@ -63,7 +65,7 @@ const VENUES = [
   { name: 'OAT (Open Air Theatre)', category: 'auto_approval', capacity: 1000, location: 'Campus Ground' },
   { name: 'University Ground', category: 'auto_approval', capacity: 2000, location: 'Sports Complex' },
   { name: 'Cafeteria', category: 'auto_approval', capacity: 150, location: 'Student Center' },
-  
+
   // Category B (Requires Admin Approval)
   { name: 'Lecture Theatre 1 (LT1)', category: 'needs_approval', capacity: 250, location: 'Lecture Theatre Block' },
   { name: 'Lecture Theatre 2 (LT2)', category: 'needs_approval', capacity: 250, location: 'Lecture Theatre Block' },
@@ -72,13 +74,6 @@ const VENUES = [
   { name: 'CEP 102', category: 'needs_approval', capacity: 100, location: 'CEP Block' },
   { name: 'CEP 108', category: 'needs_approval', capacity: 100, location: 'CEP Block' },
 ];
-
-function cleanNameForEmail(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric chars with underscore
-    .replace(/^_+|_+$/g, '');    // Trim leading/trailing underscores
-}
 
 async function seed() {
   console.log('Connecting to Neon DB...');
@@ -118,16 +113,58 @@ async function seed() {
     );
     console.log(`✓ Admin user & profile seeded (${ADMIN_EMAIL})`);
 
-    // 2. Seed Clubs and Profiles
-    console.log('Seeding 34 clubs and profiles...');
-    const clubIds: string[] = [];
-    const clubUserIds: string[] = [];
-    for (const c of CLUBS) {
-      const emailName = cleanNameForEmail(c.name);
-      const email = `${emailName}${OFFICIAL_EMAIL_DOMAIN}`;
-      
+    // 2. Seed Venues
+    console.log('Seeding 15 default venues...');
+    for (const v of VENUES) {
+      await client.query(
+        `INSERT INTO public.venues (name, category, capacity) VALUES ($1, $2, $3)`,
+        [v.name, v.category, String(v.capacity)]
+      );
+    }
+    console.log(`✓ 15 venues seeded`);
+
+    // 3. Seed Clubs from CSV
+    console.log('Reading clubs from CSV...');
+    const csvPath = path.join(__dirname, 'clubs_seeding_info.csv');
+    const workbook = xlsx.readFile(csvPath);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    // Use header: 1 to read as an array of arrays, making it immune to small header string inconsistencies
+    const rows = xlsx.utils.sheet_to_json<string[]>(sheet, { header: 1 });
+
+    let seededClubs = 0;
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length < 3) continue; // Skip empty/invalid rows
+
+      const email = String(row[1] || '').trim();
+      const clubName = String(row[2] || '').trim();
+
+      const convenerName = String(row[3] || '').trim();
+      const convenerId = String(row[4] || '').trim();
+      const convenerMobile = String(row[5] || '').trim();
+
+      const dyConvenerName = String(row[6] || '').trim();
+      const dyConvenerId = String(row[7] || '').trim();
+      const dyConvenerMobile = String(row[8] || '').trim();
+
+      const mentorName = String(row[9] || '').trim();
+
+      if (!email || !clubName) continue;
+
+      // Group category matching
+      let groupCategory = 'A'; // Default to A
+      const matchingClub = CLUBS.find(c =>
+        clubName.toLowerCase().includes(c.name.toLowerCase()) ||
+        c.name.toLowerCase().includes(clubName.toLowerCase().replace('club', '').trim())
+      );
+      if (matchingClub) {
+        groupCategory = matchingClub.group;
+      }
+
       const clubUserId = randomUUID();
-      
+
       // auth.users
       await client.query(
         `INSERT INTO auth.users (id, email, encrypted_password) VALUES ($1, $2, $3)`,
@@ -137,95 +174,54 @@ async function seed() {
       // profiles
       await client.query(
         `INSERT INTO public.profiles (id, email, full_name, role) VALUES ($1, $2, $3, $4)`,
-        [clubUserId, email, c.name, 'club']
+        [clubUserId, email, clubName, 'club']
       );
 
       // clubs
       const clubRes = await client.query(
         `INSERT INTO public.clubs (name, email, group_category) VALUES ($1, $2, $3) RETURNING id`,
-        [c.name, email, c.group]
+        [clubName, email, groupCategory]
       );
-      clubIds.push(clubRes.rows[0].id);
-      clubUserIds.push(clubUserId);
-      
-      console.log(`  ✓ Seeded: ${c.name} (${email})`);
+      const clubId = clubRes.rows[0].id;
+
+      // Club Members Insertions
+
+      // Convener
+      if (convenerName && convenerName !== 'N/A' && convenerName !== '-') {
+        await client.query(
+          `INSERT INTO public.club_members (club_id, full_name, roll_number, phone, designation, is_core_member)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [clubId, convenerName, convenerId === 'N/A' || convenerId === '-' ? null : convenerId,
+            convenerMobile === 'N/A' || convenerMobile === '-' ? null : convenerMobile, 'Convener', true]
+        );
+      }
+
+      // Deputy Convener
+      if (dyConvenerName && dyConvenerName !== 'N/A' && dyConvenerName !== '-') {
+        await client.query(
+          `INSERT INTO public.club_members (club_id, full_name, roll_number, phone, designation, is_core_member)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [clubId, dyConvenerName, dyConvenerId === 'N/A' || dyConvenerId === '-' ? null : dyConvenerId,
+            dyConvenerMobile === 'N/A' || dyConvenerMobile === '-' ? null : dyConvenerMobile, 'Deputy Convener', true]
+        );
+      }
+
+      // Faculty Mentor
+      if (mentorName && mentorName !== 'N/A' && mentorName !== '-') {
+        await client.query(
+          `INSERT INTO public.club_members (club_id, full_name, designation, is_core_member)
+           VALUES ($1, $2, $3, $4)`,
+          [clubId, mentorName, 'Faculty Mentor', true]
+        );
+      }
+
+      seededClubs++;
+      console.log(`  ✓ Seeded: ${clubName} (${email}) - Group ${groupCategory}`);
     }
 
-    // 3. Seed Venues
-    console.log('Seeding 15 venues...');
-    const venueIds: string[] = [];
-    for (const v of VENUES) {
-      const venueRes = await client.query(
-        `INSERT INTO public.venues (name, category, capacity) VALUES ($1, $2, $3) RETURNING id`,
-        [v.name, v.category, String(v.capacity)]
-      );
-      venueIds.push(venueRes.rows[0].id);
-      console.log(`  ✓ Seeded venue: ${v.name} (${v.category})`);
-    }
+    console.log(`✓ Seeded ${seededClubs} clubs from CSV.`);
+    console.log('Seeding complete!');
 
-    // 4. Seed Club Members
-    console.log('Seeding club members...');
-    for (let i = 0; i < 5; i++) {
-      await client.query(
-        `INSERT INTO public.club_members (club_id, full_name, roll_number, email, designation, phone, is_core_member)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-         [clubIds[i], 'Test Member ' + i, '202300' + i, 'testmember' + i + '@dau.ac.in', 'President', '1234567890', true]
-      );
-    }
-    console.log('  ✓ Seeded sample club members');
-
-    // 5. Seed Events
-    console.log('Seeding events...');
-    const eventIds: string[] = [];
-    for (let i = 0; i < 3; i++) {
-      const eventRes = await client.query(
-        `INSERT INTO public.events (club_id, name, date, venue) VALUES ($1, $2, $3, $4) RETURNING id`,
-        [clubIds[i], 'Sample Event ' + i, new Date().toISOString(), VENUES[i].name]
-      );
-      eventIds.push(eventRes.rows[0].id);
-    }
-    console.log('  ✓ Seeded sample events');
-
-    // 6. Seed Bookings
-    console.log('Seeding bookings...');
-    for (let i = 0; i < 3; i++) {
-      const startTime = new Date();
-      startTime.setDate(startTime.getDate() + i + 1);
-      const endTime = new Date(startTime);
-      endTime.setHours(endTime.getHours() + 2);
-      
-      await client.query(
-        `INSERT INTO public.bookings (club_id, venue_id, start_time, end_time, status, user_id, expected_attendees, event_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-         [
-           clubIds[i], 
-           venueIds[i], 
-           startTime.toISOString(), 
-           endTime.toISOString(), 
-           'approved', 
-           clubUserIds[i], 
-           50, 
-           eventIds[i]
-         ]
-      );
-    }
-    console.log('  ✓ Seeded sample bookings');
-
-    // 7. Seed Notifications
-    console.log('Seeding notifications...');
-    for (let i = 0; i < 3; i++) {
-      await client.query(
-        `INSERT INTO public.notifications (type, title, message, user_id) VALUES ($1, $2, $3, $4)`,
-        ['BOOKING_APPROVED', 'Booking Approved', 'Your booking for Sample Event ' + i + ' has been approved.', clubUserIds[i]]
-      );
-      await client.query(
-        `INSERT INTO public.notifications (type, title, message, user_id) VALUES ($1, $2, $3, $4)`,
-        ['NEW_BOOKING', 'New Booking Request', 'Club requested a venue for Sample Event ' + i, adminId]
-      );
-    }
-    console.log('  ✓ Seeded sample notifications');
-
-    console.log('Seeding complete! 🚀');
   } catch (error) {
     console.error('Seeding process failed:', error);
   } finally {

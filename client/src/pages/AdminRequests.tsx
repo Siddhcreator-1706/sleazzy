@@ -254,6 +254,11 @@ const AdminRequestRow: React.FC<AdminRequestRowProps> = ({ req, index, venues, h
                 )}
               </div>
               <div className="text-xs text-textMuted mt-0.5">{req.clubName}</div>
+              {req.permissionsLink && (
+                <a href={req.permissionsLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand hover:underline mt-1 inline-block font-medium" onClick={(e) => e.stopPropagation()}>
+                  🔗 View Permissions
+                </a>
+              )}
               <div className="text-xs text-textMuted mt-1 sm:hidden">
                 <div className="flex items-center gap-1">
                   <Clock size={12} /> {req.startTime} - {req.endTime}

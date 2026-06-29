@@ -17,9 +17,11 @@ import {
   Calendar,
   Archive,
   MapPin,
+  Menu,
 } from 'lucide-react';
 import { User } from '../types';
 import { Button } from '../components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
 import { ThemeToggle } from '../components/theme-toggle';
 import NotificationPanel from '../components/NotificationPanel';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
@@ -48,6 +50,7 @@ const adminLinks = [
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const location = useLocation();
   const isCommittee = user.name.toLowerCase().includes('committee');
   const clubLabel = isCommittee ? 'Committee' : 'Club';
@@ -109,7 +112,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
   return (
     <div className="min-h-dvh flex bg-bgMain relative">
       {/* ====== Desktop Sidebar ====== */}
-      <aside className="hidden md:flex flex-col w-(--sidebar-width) fixed h-full z-10 border-r border-borderSoft bg-card/80 backdrop-blur-xl">
+      <aside className="hidden lg:flex flex-col w-(--sidebar-width) fixed h-full z-10 border-r border-borderSoft bg-card/80 backdrop-blur-xl">
         <div className="flex flex-col h-full">
           {/* Logo */}
           <motion.div
@@ -153,8 +156,8 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
             className="p-3 border-t border-borderSoft"
           >
             <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-hoverSoft transition-colors group">
-               <Avatar className={cn("h-10 w-10 border border-borderSoft shrink-0 shadow-sm transition-all group-hover:border-brand/50 ring-2 ring-brand/10", getLogoBgClass(user.name))}>
-                <AvatarImage src={getClubLogoUrl(user.name) || ''} alt={user.name} className="object-contain p-1 drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]" />
+               <Avatar className={cn("h-10 w-10 border border-borderSoft shrink-0 shadow-sm transition-all group-hover:border-brand/50 ring-2 ring-brand/10 bg-white", getLogoBgClass(user.name))}>
+                <AvatarImage src={user.logoUrl || getClubLogoUrl(user.name) || ''} alt={user.name} className="object-contain p-1 drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]" />
                 <AvatarFallback className="bg-brand text-white font-semibold text-sm flex items-center justify-center">
                   {user.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
@@ -181,7 +184,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
       </aside>
 
       {/* ====== Main Content ====== */}
-      <div className="flex-1 md:ml-(--sidebar-width) flex flex-col min-h-dvh">
+      <div className="flex-1 min-w-0 overflow-x-hidden lg:ml-(--sidebar-width) flex flex-col min-h-dvh">
         {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -8 }}
@@ -191,11 +194,69 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
           style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}
         >
           <div className="flex items-center gap-3 min-w-0">
-            {/* Mobile logo */}
-            <div className="md:hidden">
+            {/* Mobile Hamburger & Logo */}
+            <div className="lg:hidden flex items-center gap-3">
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 p-0 text-textPrimary hover:bg-hoverSoft">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle Menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] sm:w-[320px] flex flex-col p-0 border-r border-borderSoft bg-card/90 backdrop-blur-xl">
+                  <div className="p-5 border-b border-borderSoft">
+                    <Logo size="md" />
+                  </div>
+                  <nav className="flex-1 flex flex-col gap-1 p-3 overflow-y-auto overscroll-contain scrollbar-hide">
+                    <div className="px-3 py-2 text-[10px] font-bold text-textMuted/50 uppercase tracking-[0.15em] mt-1 mb-1">
+                      {user.role === 'club' ? 'Club Menu' : 'Admin Controls'}
+                    </div>
+                    {links.map((link) => (
+                      <NavLink 
+                        key={link.to} 
+                        to={link.to} 
+                        className={navItemClass} 
+                        end={link.end}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {({ isActive }) => (
+                          <>
+                            {isActive && (
+                              <motion.div
+                                layoutId="mobile-sidebar-active"
+                                className="absolute inset-0 bg-brand/8 rounded-xl"
+                                transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                              />
+                            )}
+                            <link.icon size={20} className="relative z-10" />
+                            <span className="relative z-10">{link.label}</span>
+                          </>
+                        )}
+                      </NavLink>
+                    ))}
+                  </nav>
+                  
+                  {/* User Profile Area (Mobile) */}
+                  <div className="p-4 border-t border-borderSoft mt-auto bg-card">
+                    <div className="flex items-center gap-3">
+                       <Avatar className={cn("h-10 w-10 border border-borderSoft shrink-0 shadow-sm ring-2 ring-brand/10 bg-white", getLogoBgClass(user.name))}>
+                        <AvatarImage src={user.logoUrl || getClubLogoUrl(user.name) || ''} alt={user.name} className="object-contain p-1" />
+                        <AvatarFallback className="bg-brand text-white font-semibold">
+                          {user.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-textPrimary truncate">{user.name}</p>
+                        <p className="text-xs text-textMuted truncate">{user.role === 'club' ? `Group ${user.group}` : 'Administrator'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+              
               <Logo size="sm" showText={false} />
             </div>
-            <h1 className="text-base sm:text-lg font-bold text-textPrimary truncate tracking-tight md:hidden">
+            <h1 className="text-base sm:text-lg font-bold text-textPrimary truncate tracking-tight lg:hidden">
               {links.find(l => l.end ? location.pathname === l.to : location.pathname.startsWith(l.to))?.label
                 ?? (user.role === 'club' ? 'Club Portal' : 'Administration')}
             </h1>
@@ -219,7 +280,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
         </motion.header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 mb-bottom-nav">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto w-full">
             <AnimatePresence mode="wait">
               <motion.div
@@ -236,50 +297,10 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
         </main>
 
         {/* Footer (desktop) */}
-        <footer className="hidden md:block border-t border-borderSoft/50 py-4 px-6">
+        <footer className="hidden lg:block border-t border-borderSoft/50 py-4 px-6">
           <GdgFooterCredit compact className="max-w-none" />
         </footer>
       </div>
-
-      {/* ====== Mobile Bottom Navigation ====== */}
-      <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/90 backdrop-blur-2xl border-t border-borderSoft/60 shadow-[0_-4px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_30px_rgba(0,0,0,0.3)]"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}
-      >
-        <div className="flex items-stretch justify-around px-2 py-1.5">
-          {links.map((link) => {
-            const isActive = link.end
-              ? location.pathname === link.to
-              : location.pathname.startsWith(link.to);
-
-            return (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.end}
-                className={mobileNavClass(isActive)}
-              >
-                <div className="relative">
-                  {isActive && (
-                    <motion.div
-                      layoutId="mobile-active"
-                      className="absolute -inset-2 bg-brand/10 rounded-full"
-                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                  <link.icon size={22} className="relative z-10" />
-                </div>
-                <span className={cn(
-                  'text-[10px] font-semibold relative z-10',
-                  isActive ? 'text-brand' : 'text-textMuted'
-                )}>
-                  {link.label}
-                </span>
-              </NavLink>
-            );
-          })}
-        </div>
-      </nav>
     </div>
   );
 };

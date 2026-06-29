@@ -23,6 +23,7 @@ export interface User {
   role: Role;
   group?: ClubGroupType; // Optional, for clubs
   clubId?: string;
+  logoUrl?: string | null;
 }
 
 export interface ClubMember {
@@ -79,6 +80,7 @@ export interface Booking {
   venueName?: string;
   event_id?: string;
   issueFlag?: string | null;
+  permissionsLink?: string | null;
 }
 
 export interface GroupedBooking extends Omit<Booking, 'id' | 'venueId' | 'status'> {
@@ -88,4 +90,5 @@ export interface GroupedBooking extends Omit<Booking, 'id' | 'venueId' | 'status
   status: BookingStatus | 'partial'; // Support 'partial' for mixed statuses
   bookings: Booking[]; // The original individual items
   issueFlag?: string | null;
+  permissionsLink?: string | null;
 }

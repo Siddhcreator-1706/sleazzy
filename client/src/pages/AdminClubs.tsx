@@ -238,7 +238,7 @@ const AdminClubs: React.FC = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full min-w-[600px] sm:min-w-0 text-left text-sm">
                         <thead className="bg-hoverSoft/50 border-b border-borderSoft text-textSecondary font-semibold">
                             <tr>
                                 <th className="px-6 py-4">Club Name</th>

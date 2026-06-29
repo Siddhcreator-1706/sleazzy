@@ -139,7 +139,7 @@ const AdminVenues: React.FC = () => {
 
       <div className="bg-card border border-borderSoft rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[600px] sm:min-w-0 text-left text-sm">
             <thead className="bg-bgMain border-b border-borderSoft text-textSecondary uppercase text-xs font-semibold">
               <tr>
                 <th className="px-6 py-4">Venue Name</th>

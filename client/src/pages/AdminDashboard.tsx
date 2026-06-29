@@ -348,7 +348,7 @@ const AdminDashboard: React.FC = () => {
           </CardHeader>
 
           <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col md:flex-row gap-6 sm:gap-8">
+            <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
               {/* Calendar container - centered but spanning more width */}
               <div className="flex-1 flex justify-center lg:justify-start overflow-hidden">
                 <Calendar
@@ -388,6 +388,11 @@ const AdminDashboard: React.FC = () => {
                               </Badge>
                             </div>
                             <div className="text-xs text-brand font-medium mt-0.5 mb-2">{event.clubName}</div>
+                            {event.permissionsLink && (
+                              <a href={event.permissionsLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand hover:underline mb-2 inline-block font-medium">
+                                🔗 View Permissions
+                              </a>
+                            )}
                             <div className="mt-2 text-xs text-textMuted">
                               {event.startTime} - {event.endTime}
                             </div>
@@ -463,6 +468,11 @@ const AdminDashboard: React.FC = () => {
                         <td className="px-4 sm:px-6 py-4">
                           <div className="font-semibold text-textPrimary">{evt.eventName}</div>
                           <div className="text-xs text-textMuted mt-0.5">{evt.clubName}</div>
+                          {evt.permissionsLink && (
+                            <a href={evt.permissionsLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand hover:underline mt-1 inline-block font-medium">
+                              🔗 View Permissions
+                            </a>
+                          )}
                           <div className="text-xs text-textMuted mt-1 sm:hidden">
                             <div className="flex items-center gap-1">
                               <CalendarIcon size={12} /> {evt.startTime} - {evt.endTime}
@@ -558,6 +568,13 @@ const AdminDashboard: React.FC = () => {
                         <div className="mt-1 text-sm text-textMuted">
                           Requested Venue(s): <span className="font-semibold text-foreground">{req.venueName || req.venueIds.map(getVenueName).join(', ')}</span> ({req.startTime} - {req.endTime})
                         </div>
+                        {req.permissionsLink && (
+                          <div className="mt-1">
+                            <a href={req.permissionsLink} target="_blank" rel="noopener noreferrer" className="text-xs text-brand hover:underline font-medium">
+                              🔗 View Permissions
+                            </a>
+                          </div>
+                        )}
                         {req.issueFlag && (
                           <div className="mt-2 text-sm bg-warning/10 text-warning border border-warning/20 p-2 rounded-md flex items-start gap-2">
                             <AlertCircle size={16} className="mt-0.5 shrink-0" />
