@@ -4,7 +4,9 @@ const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
 const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
 const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
 const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
-const APPROVAL_NOTIFY_EMAIL = process.env.APPROVAL_NOTIFY_EMAIL;
+const APPROVAL_MAIL = process.env.APPROVAL_MAIL;
+const PASSWORD_MAIL = process.env.PASSWORD_MAIL;
+const EVENT_REMINDER_MAIL = process.env.EVENT_REMINDER_MAIL;
 
 export type PendingBookingItem = {
   venueName: string;
@@ -48,95 +50,10 @@ function isEmailJsConfigured(): boolean {
     EMAILJS_SERVICE_ID &&
     EMAILJS_TEMPLATE_ID &&
     EMAILJS_PUBLIC_KEY &&
-    EMAILJS_PRIVATE_KEY &&
-    APPROVAL_NOTIFY_EMAIL
+    EMAILJS_PRIVATE_KEY
   );
 }
 
-/**
- * Send an email to the approval recipient when one or more venue bookings need approval.
- * Uses EmailJS. Does nothing if EmailJS or APPROVAL_NOTIFY_EMAIL is not set.
- */
-export async function sendApprovalNotification(
-  items: PendingBookingItem[]
-): Promise<{ sent: boolean; error?: string }> {
-  if (!isEmailJsConfigured()) {
-    console.warn(
-      'EmailJS or APPROVAL_NOTIFY_EMAIL not configured; skipping approval notification email.'
-    );
-    return { sent: false };
-  }
-
-  if (items.length === 0) return { sent: false };
-
-  const blocks = items.map((i, index) => {
-    const dateLabel = formatDateLabel(i.startTime);
-    const startTimeLabel = formatTimeLabel(i.startTime);
-    const endTimeLabel = formatTimeLabel(i.endTime);
-
-    return `Request ${index + 1}\nVenue: ${i.venueName}\nDate: ${dateLabel}\nTime: ${startTimeLabel} - ${endTimeLabel}\nEvent: ${i.eventName}${i.clubName ? `\nRequested by: ${i.clubName}` : ''}`;
-  });
-
-  const message = `Respected Sir/Madam,\n\nKindly review the following venue booking request(s):\n\n${blocks.join('\n\n')}\n\nPlease review and take action from the admin dashboard.\n\nRegards,\nSleazzy Venue Booking System`;
-
-  const messageHtml = `
-    <p>Respected Sir/Madam,</p>
-    <p>Kindly review the following venue booking request(s):</p>
-    ${items
-      .map((i, index) => {
-        const dateLabel = formatDateLabel(i.startTime);
-        const startTimeLabel = formatTimeLabel(i.startTime);
-        const endTimeLabel = formatTimeLabel(i.endTime);
-        return `
-          <div style="margin-bottom:16px;">
-            <p style="margin:0 0 8px 0;"><strong>Request ${index + 1}</strong></p>
-            <p style="margin:0;"><strong>Venue:</strong> ${i.venueName}</p>
-            <p style="margin:0;"><strong>Date:</strong> ${dateLabel}</p>
-            <p style="margin:0;"><strong>Time:</strong> ${startTimeLabel} - ${endTimeLabel}</p>
-            <p style="margin:0;"><strong>Event:</strong> ${i.eventName}</p>
-            ${i.clubName ? `<p style="margin:0;"><strong>Requested by:</strong> ${i.clubName}</p>` : ''}
-          </div>
-        `;
-      })
-      .join('')}
-    <p>Please review and take action from the admin dashboard.</p>
-    <p>Regards,<br/>Sleazzy Venue Booking System</p>
-  `;
-
-  const primaryItem = items[0];
-  const title = `[General Event] ${primaryItem.venueName} Booking`;
-  const eventTypeLabel = formatEventTypeLabel(primaryItem.eventType);
-  const subject =
-    items.length === 1
-      ? title
-      : `[${eventTypeLabel} Event] ${items.length} Venue Bookings`;
-
-  const templateParams = {
-    to_email: APPROVAL_NOTIFY_EMAIL,
-    title,
-    subject,
-    message,
-    message_html: messageHtml,
-    booking_count: String(items.length),
-  };
-
-  try {
-    await emailjs.send(
-      EMAILJS_SERVICE_ID!,
-      EMAILJS_TEMPLATE_ID!,
-      templateParams,
-      {
-        publicKey: EMAILJS_PUBLIC_KEY!,
-        privateKey: EMAILJS_PRIVATE_KEY!,
-      }
-    );
-    return { sent: true };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : JSON.stringify(err, null, 2);
-    console.error('Failed to send approval notification email:', message);
-    return { sent: false, error: message };
-  }
-}
 
 /**
  * Send an email to the user with a temporary password when they trigger a forgot password request.
@@ -163,6 +80,7 @@ export async function sendPasswordResetEmail(
 
   const templateParams = {
     to_email: email,
+    from_email: PASSWORD_MAIL || '',
     title,
     subject,
     message,
@@ -185,5 +103,79 @@ export async function sendPasswordResetEmail(
     const errorMsg = err instanceof Error ? err.message : JSON.stringify(err, null, 2);
     console.error('Failed to send password reset email:', errorMsg);
     return { sent: false, error: errorMsg };
+  }
+}
+
+/**
+ * Send an email to the club when their booking is approved.
+ */
+export async function sendBookingApprovedEmailToClub(
+  clubEmail: string,
+  venueName: string,
+  eventName: string,
+  date: string,
+  startTime: string,
+  endTime: string
+): Promise<{ sent: boolean; error?: string }> {
+  if (!isEmailJsConfigured()) return { sent: false };
+
+  const title = 'Booking Approved';
+  const subject = 'Booking Approved - Sleazzy';
+  const message = `Your booking for ${eventName} at ${venueName} on ${date} from ${startTime} to ${endTime} has been approved.`;
+  const messageHtml = `<p>Your booking for <strong>${eventName}</strong> at <strong>${venueName}</strong> on <strong>${date}</strong> from <strong>${startTime}</strong> to <strong>${endTime}</strong> has been approved.</p>`;
+
+  const templateParams = {
+    to_email: clubEmail,
+    from_email: APPROVAL_MAIL || '',
+    title,
+    subject,
+    message,
+    message_html: messageHtml,
+    booking_count: '1',
+  };
+
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID!, EMAILJS_TEMPLATE_ID!, templateParams, {
+      publicKey: EMAILJS_PUBLIC_KEY!,
+      privateKey: EMAILJS_PRIVATE_KEY!,
+    });
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, error: (err as Error).message };
+  }
+}
+
+/**
+ * Send an event report reminder to the club.
+ */
+export async function sendEventReportReminderEmail(
+  clubEmail: string,
+  eventName: string
+): Promise<{ sent: boolean; error?: string }> {
+  if (!isEmailJsConfigured()) return { sent: false };
+
+  const title = 'Event Report Reminder';
+  const subject = 'Event Report Reminder - Sleazzy';
+  const message = `This is a reminder to submit the event report for your recent event: ${eventName}.`;
+  const messageHtml = `<p>This is a reminder to submit the event report for your recent event: <strong>${eventName}</strong>.</p>`;
+
+  const templateParams = {
+    to_email: clubEmail,
+    from_email: EVENT_REMINDER_MAIL || '',
+    title,
+    subject,
+    message,
+    message_html: messageHtml,
+    booking_count: '0',
+  };
+
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID!, EMAILJS_TEMPLATE_ID!, templateParams, {
+      publicKey: EMAILJS_PUBLIC_KEY!,
+      privateKey: EMAILJS_PRIVATE_KEY!,
+    });
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, error: (err as Error).message };
   }
 }

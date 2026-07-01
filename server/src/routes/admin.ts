@@ -161,7 +161,7 @@ router.put('/bookings/:id', async (req, res) => {
         UPDATE bookings SET ${setString} WHERE id = $${values.length} RETURNING *
       )
       SELECT u.*, 
-             json_build_object('name', c.name) AS clubs,
+             json_build_object('name', c.name, 'email', c.email) AS clubs,
              json_build_object('name', v.name) AS venues
       FROM updated u
       LEFT JOIN clubs c ON u.club_id = c.id
@@ -178,6 +178,21 @@ router.put('/bookings/:id', async (req, res) => {
       eventName: data.event_name,
       clubId: data.club_id,
     });
+
+    if (updateFields.status === 'approved' && data.clubs?.email) {
+      const { sendBookingApprovedEmailToClub } = await import('../services/email');
+      const date = new Date(data.start_time).toLocaleDateString('en-IN');
+      const startTimeStr = new Date(data.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      const endTimeStr = new Date(data.end_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      await sendBookingApprovedEmailToClub(
+        data.clubs.email,
+        data.venues?.name || 'Venue',
+        data.event_name,
+        date,
+        startTimeStr,
+        endTimeStr
+      );
+    }
 
     return res.json(data);
   } catch (error: any) {

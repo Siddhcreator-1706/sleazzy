@@ -1,6 +1,5 @@
 import cron from 'node-cron';
 import { db } from '../db';
-import { sendApprovalNotification } from './email'; // Reusing email service logic if possible, or using nodemailer
 
 export const startCronJobs = () => {
   // Run every day at 10:00 AM
@@ -24,23 +23,28 @@ export const startCronJobs = () => {
 
       for (const row of rows) {
         // Send email to club
-        // In a real app with proper EmailJS, you'd trigger a specific template.
         console.log(`Sending reminder email to ${row.email} for event ${row.name}`);
-        // Since EmailJS is primarily client-side but we have a nodejs wrapper,
-        // we can send a custom message if a template is set up.
-        // If not set up, this log serves as the trigger point.
-        /* 
-        await sendApprovalNotification([{
-          venueName: 'Report Reminder',
-          eventName: row.name,
-          startTime: '',
-          endTime: '',
-          clubName: row.club_name,
-        }]); 
-        */
+        
+        // Dynamic import to avoid circular dependencies if any, though regular import is fine too.
+        const { sendEventReportReminderEmail } = await import('./email');
+        await sendEventReportReminderEmail(row.email, row.name);
       }
     } catch (error) {
       console.error('Error running event report reminder cron:', error);
+    }
+  });
+
+  // Run every day at 2:00 AM to clean up old notifications
+  cron.schedule('0 2 * * *', async () => {
+    console.log('Running daily notification cleanup...');
+    try {
+      const result = await db.query(`
+        DELETE FROM notifications 
+        WHERE created_at < CURRENT_TIMESTAMP - INTERVAL '7 days'
+      `);
+      console.log(`Deleted ${result.rowCount} notifications older than 7 days.`);
+    } catch (error) {
+      console.error('Error cleaning up old notifications:', error);
     }
   });
 };
