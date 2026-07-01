@@ -6,7 +6,9 @@ export const startCronJobs = () => {
   cron.schedule('0 10 * * *', async () => {
     console.log('Running daily event report reminder check...');
     try {
-      // Find events exactly 7 days past their end_date without a report
+      // Send reminder if:
+      // 1. Exactly 7 days have passed since the event ended, OR
+      // 2. It's the 1st day of a new month and the event ended in a prior month
       const query = `
         SELECT e.name, c.email, c.name as club_name
         FROM events e
@@ -16,7 +18,17 @@ export const startCronJobs = () => {
           AND e.event_type IN ('open_all', 'co_curricular')
           AND e.report_exempt = false
           AND er.id IS NULL
-          AND CURRENT_DATE = (COALESCE(e.end_date, e.date) + INTERVAL '7 days')::DATE
+          AND (
+            -- Condition 1: Exactly 7 days after the event ended
+            CURRENT_DATE = (COALESCE(e.end_date, e.date) + INTERVAL '7 days')::DATE
+            OR
+            -- Condition 2: First day of the new month, event ended in a previous month
+            (
+              EXTRACT(DAY FROM CURRENT_DATE) = 1
+              AND COALESCE(e.end_date, e.date) < DATE_TRUNC('month', CURRENT_DATE)
+              AND CURRENT_DATE > (COALESCE(e.end_date, e.date) + INTERVAL '7 days')::DATE
+            )
+          )
       `;
 
       const { rows } = await db.query(query);

@@ -194,7 +194,7 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
           auth: true,
           body: formData,
         });
-        toastSuccess('Member added to roster successfully');
+        toastSuccess('Member added to the club successfully');
       }
       setEditDialogOpen(false);
       fetchMembers(user?.role === 'admin' ? selectedClubId : undefined);
@@ -356,8 +356,8 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
           </h1>
           <p className="text-textMuted mt-1 text-sm sm:text-base">
             {isClubUser
-              ? `Manage your ${entityType.toLowerCase()} roster. Add, edit, or remove members as needed.`
-              : `View ${entityType.toLowerCase()} rosters of different campus clubs.`}
+              ? `Manage your ${entityType.toLowerCase()} members. Add, edit, or remove members as needed.`
+              : `View member directories of different campus clubs.`}
           </p>
         </div>
 

@@ -83,9 +83,9 @@ const AdminClubs: React.FC = () => {
         try {
             const data = await apiRequest<ExportClubMember[]>('/api/admin/club-members/all', { auth: true });
             exportRosterToExcel(data);
-            toastSuccess('Roster exported successfully');
+            toastSuccess('Member list exported successfully');
         } catch (err) {
-            toastError(err, 'Failed to export roster');
+            toastError(err, 'Failed to export member list');
         } finally {
             setIsExporting(false);
         }
@@ -99,9 +99,9 @@ const AdminClubs: React.FC = () => {
             const data = await apiRequest<ExportClubMember[]>(`/api/club-members?clubId=${club.id}`, { auth: true });
             const enriched = data.map(m => ({ ...m, club_name: club.name }));
             exportRosterToExcel(enriched);
-            toastSuccess(`${club.name} roster exported successfully`);
+            toastSuccess(`${club.name} member list exported successfully`);
         } catch (err) {
-            toastError(err, 'Failed to export club roster');
+            toastError(err, 'Failed to export club member list');
         } finally {
             setExportingClubId(null);
         }
@@ -277,7 +277,7 @@ const AdminClubs: React.FC = () => {
                         className="gap-2 rounded-xl h-10 font-semibold border-[1.5px] border-slate-300 dark:border-slate-600 bg-card text-textSecondary hover:bg-hoverSoft shadow-sm"
                     >
                         <Download size={16} />
-                        {isExporting ? 'Exporting...' : 'Export Roster (Excel)'}
+                        {isExporting ? 'Exporting...' : 'Export Members (Excel)'}
                     </Button>
                 </div>
             </div>
@@ -354,7 +354,7 @@ const AdminClubs: React.FC = () => {
                                                     className="h-8 px-2 text-textSecondary hover:text-brand"
                                                     onClick={() => handleExportSingleClub(club)}
                                                     disabled={exportingClubId !== null}
-                                                    title="Export Club Roster"
+                                                    title="Export Member List"
                                                 >
                                                     <Download className="h-4 w-4 mr-1.5" />
                                                     <span className="hidden sm:inline">
