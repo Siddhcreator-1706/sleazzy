@@ -111,15 +111,15 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
         let clubMems = members.filter(m => m.club_id === selectedClubForModal.id);
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
-            clubMems = clubMems.filter(m => 
-                m.full_name.toLowerCase().includes(q) || 
+            clubMems = clubMems.filter(m =>
+                m.full_name.toLowerCase().includes(q) ||
                 (m.designation && m.designation.toLowerCase().includes(q))
             );
             // If the query matched the club name/tag, don't filter out members. 
             // Only filter members if the query didn't match the club.
             const matchesClub = selectedClubForModal.name.toLowerCase().includes(q) ||
-                                selectedClubForModal.email.toLowerCase().includes(q) ||
-                                (!!selectedClubForModal.member_tag && selectedClubForModal.member_tag.toLowerCase().includes(q));
+                selectedClubForModal.email.toLowerCase().includes(q) ||
+                (!!selectedClubForModal.member_tag && selectedClubForModal.member_tag.toLowerCase().includes(q));
             if (matchesClub) {
                 return members.filter(m => m.club_id === selectedClubForModal.id);
             }
@@ -164,17 +164,17 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
 
             const q = searchQuery.toLowerCase();
             const matchesClub = c.name.toLowerCase().includes(q) ||
-                                  c.email.toLowerCase().includes(q) ||
-                                  (!!c.member_tag && c.member_tag.toLowerCase().includes(q));
+                c.email.toLowerCase().includes(q) ||
+                (!!c.member_tag && c.member_tag.toLowerCase().includes(q));
 
             const hasMatchingMember = members.some(m => m.club_id === c.id && (
-                m.full_name.toLowerCase().includes(q) || 
+                m.full_name.toLowerCase().includes(q) ||
                 (m.designation && m.designation.toLowerCase().includes(q))
             ));
-            
+
             const matchesSearch = matchesClub || hasMatchingMember;
             const matchesTab = c.organization_type === activeTab;
-            
+
             return matchesSearch && matchesTab;
         });
     }, [clubs, members, searchQuery, activeTab]);
@@ -183,7 +183,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
         const groups: Record<string, CommitteeMember[]> = {};
         for (const m of members) {
             // Filter by search query if present
-            const matchesQuery = searchQuery === '' || 
+            const matchesQuery = searchQuery === '' ||
                 m.club_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 m.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (m.designation && m.designation.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -215,7 +215,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                         <div className="shrink-0">
                             <Logo size="md" />
                         </div>
-                        
+
                         {/* Desktop Nav Links */}
                         <div className="hidden md:flex items-center gap-1 sm:gap-2">
                             <Button
@@ -246,7 +246,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                     {/* Right: Utilities */}
                     <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
                         <ThemeToggle />
-                        
+
                         {/* Sign In (Desktop Only) */}
                         <div className="hidden md:block">
                             <Button
@@ -414,21 +414,21 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                             <TabsTrigger value="members" className="rounded-lg py-1.5 text-sm font-medium cursor-pointer">Members</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="members" className="h-[340px] flex flex-col focus-visible:outline-none focus-visible:ring-0 mt-0">
+                        <TabsContent value="members" className="min-h-[250px] max-h-[50vh] flex flex-col focus-visible:outline-none focus-visible:ring-0 mt-0">
                             <div className="flex items-center justify-between px-1 mb-3 shrink-0">
-                                <span className="text-xs font-semibold text-textMuted uppercase tracking-wider">Committee Members</span>
+                                <span className="text-xs font-semibold text-textMuted uppercase tracking-wider">Members</span>
                                 <span className="text-xs text-textMuted font-medium">{selectedClubMembers.length} member{selectedClubMembers.length !== 1 ? 's' : ''}</span>
                             </div>
 
                             <div className="space-y-2.5 flex-1 overflow-y-auto pr-1">
                                 {selectedClubMembers.length === 0 ? (
                                     <div className="h-full flex flex-col items-center justify-center text-center text-textMuted bg-hoverSoft/20 rounded-xl border border-dashed border-borderSoft p-6">
-                                        No committee members listed for this club.
+                                        No members listed for this club.
                                     </div>
                                 ) : (
                                     selectedClubMembers.map(member => (
-                                        <div 
-                                            key={member.id} 
+                                        <div
+                                            key={member.id}
                                             className="p-3.5 rounded-xl border border-borderSoft/60 bg-hoverSoft/15 hover:bg-hoverSoft/30 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                                         >
                                             <div className="space-y-1">
@@ -441,7 +441,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                                             </div>
 
                                             {member.phone && (
-                                                <a 
+                                                <a
                                                     href={`tel:${member.phone}`}
                                                     className="h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary flex items-center gap-1.5 self-start sm:self-center transition-all shadow-sm"
                                                 >
@@ -455,74 +455,74 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                             </div>
                         </TabsContent>
 
-                        <TabsContent value="about" className="h-[340px] flex flex-col focus-visible:outline-none focus-visible:ring-0 mt-0">
+                        <TabsContent value="about" className="min-h-[250px] max-h-[50vh] flex flex-col focus-visible:outline-none focus-visible:ring-0 mt-0">
                             <div className="space-y-4 flex-1 overflow-y-auto pr-1">
                                 <div className="space-y-2">
                                     <span className="text-xs font-bold text-textMuted uppercase tracking-wider block">Description</span>
-                                    <p className="text-sm text-textSecondary leading-relaxed bg-hoverSoft/15 border border-borderSoft/60 rounded-xl p-3.5">
+                                    <p className="text-sm text-textSecondary leading-relaxed bg-hoverSoft/15 border border-borderSoft/60 rounded-xl p-3.5 whitespace-pre-wrap">
                                         {selectedClubForModal?.description || "Description not available."}
                                     </p>
                                 </div>
                                 <div className="space-y-2">
                                     <span className="text-xs font-bold text-textMuted uppercase tracking-wider block">Key Activities & Events</span>
-                                    <p className="text-sm text-textSecondary leading-relaxed bg-hoverSoft/15 border border-borderSoft/60 rounded-xl p-3.5">
+                                    <p className="text-sm text-textSecondary leading-relaxed bg-hoverSoft/15 border border-borderSoft/60 rounded-xl p-3.5 whitespace-pre-wrap">
                                         {selectedClubForModal?.key_activities || "Key activities not available."}
                                     </p>
                                 </div>
-                                {(selectedClubForModal?.website_url || 
-                                  selectedClubForModal?.linkedin_url || 
-                                  selectedClubForModal?.instagram_url || 
-                                  selectedClubForModal?.youtube_url) && (
-                                    <div className="space-y-2">
-                                        <span className="text-xs font-bold text-textMuted uppercase tracking-wider block">Links & Socials</span>
-                                        <div className="flex flex-wrap gap-2 bg-hoverSoft/15 border border-borderSoft/60 rounded-xl p-3.5">
-                                            {selectedClubForModal?.website_url && (
-                                                <a 
-                                                    href={selectedClubForModal.website_url.startsWith('http') ? selectedClubForModal.website_url : `https://${selectedClubForModal.website_url}`}
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary transition-all shadow-sm"
-                                                >
-                                                    <Globe size={13} className="text-textMuted" />
-                                                    Website
-                                                </a>
-                                            )}
-                                            {selectedClubForModal?.linkedin_url && (
-                                                <a 
-                                                    href={selectedClubForModal.linkedin_url.startsWith('http') ? selectedClubForModal.linkedin_url : `https://${selectedClubForModal.linkedin_url}`}
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary transition-all shadow-sm"
-                                                >
-                                                    <Linkedin size={13} className="text-textMuted" />
-                                                    LinkedIn
-                                                </a>
-                                            )}
-                                            {selectedClubForModal?.instagram_url && (
-                                                <a 
-                                                    href={selectedClubForModal.instagram_url.startsWith('http') ? selectedClubForModal.instagram_url : `https://${selectedClubForModal.instagram_url}`}
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary transition-all shadow-sm"
-                                                >
-                                                    <Instagram size={13} className="text-textMuted" />
-                                                    Instagram
-                                                </a>
-                                            )}
-                                            {selectedClubForModal?.youtube_url && (
-                                                <a 
-                                                    href={selectedClubForModal.youtube_url.startsWith('http') ? selectedClubForModal.youtube_url : `https://${selectedClubForModal.youtube_url}`}
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary transition-all shadow-sm"
-                                                >
-                                                    <Youtube size={13} className="text-textMuted" />
-                                                    YouTube
-                                                </a>
-                                            )}
+                                {(selectedClubForModal?.website_url ||
+                                    selectedClubForModal?.linkedin_url ||
+                                    selectedClubForModal?.instagram_url ||
+                                    selectedClubForModal?.youtube_url) && (
+                                        <div className="space-y-2">
+                                            <span className="text-xs font-bold text-textMuted uppercase tracking-wider block">Links & Socials</span>
+                                            <div className="flex flex-wrap gap-2 bg-hoverSoft/15 border border-borderSoft/60 rounded-xl p-3.5">
+                                                {selectedClubForModal?.website_url && (
+                                                    <a
+                                                        href={selectedClubForModal.website_url.startsWith('http') ? selectedClubForModal.website_url : `https://${selectedClubForModal.website_url}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary transition-all shadow-sm"
+                                                    >
+                                                        <Globe size={13} className="text-textMuted" />
+                                                        Website
+                                                    </a>
+                                                )}
+                                                {selectedClubForModal?.linkedin_url && (
+                                                    <a
+                                                        href={selectedClubForModal.linkedin_url.startsWith('http') ? selectedClubForModal.linkedin_url : `https://${selectedClubForModal.linkedin_url}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary transition-all shadow-sm"
+                                                    >
+                                                        <Linkedin size={13} className="text-textMuted" />
+                                                        LinkedIn
+                                                    </a>
+                                                )}
+                                                {selectedClubForModal?.instagram_url && (
+                                                    <a
+                                                        href={selectedClubForModal.instagram_url.startsWith('http') ? selectedClubForModal.instagram_url : `https://${selectedClubForModal.instagram_url}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary transition-all shadow-sm"
+                                                    >
+                                                        <Instagram size={13} className="text-textMuted" />
+                                                        Instagram
+                                                    </a>
+                                                )}
+                                                {selectedClubForModal?.youtube_url && (
+                                                    <a
+                                                        href={selectedClubForModal.youtube_url.startsWith('http') ? selectedClubForModal.youtube_url : `https://${selectedClubForModal.youtube_url}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-borderSoft/60 bg-background hover:bg-hoverSoft hover:text-brand text-xs font-semibold text-textSecondary transition-all shadow-sm"
+                                                    >
+                                                        <Youtube size={13} className="text-textMuted" />
+                                                        YouTube
+                                                    </a>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
                             </div>
                         </TabsContent>
 
@@ -594,9 +594,9 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="mt-5 pt-3 border-t border-borderSoft/30 flex items-center justify-between">
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     window.location.href = `mailto:${club.email}`;
@@ -606,7 +606,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                                                 <Mail size={13} />
                                                 Contact {club.name.toLowerCase().includes('committee') ? 'Committee' : 'Club'}
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => setSelectedClubForModal(club)}
                                                 className="text-[11px] font-semibold text-brand flex items-center gap-0.5 hover:underline cursor-pointer"
                                             >

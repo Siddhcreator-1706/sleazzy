@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+import { DatePicker } from '../components/ui/date-picker';
 
 interface ApiClub {
   id: string;
@@ -433,18 +434,20 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
 
       {/* Add / Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingMember ? 'Edit Member Details' : `Add ${entityType} Member`}</DialogTitle>
-            <DialogDescription>
-              {editingMember 
+        <DialogContent className="sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-1">
+            <DialogTitle className="text-xl font-bold text-textPrimary">
+              {editingMember ? 'Edit Member Details' : `Add ${entityType} Member`}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-textMuted">
+              {editingMember
                 ? `Update information for ${editingMember.full_name}`
                 : `Enter the ${entityType.toLowerCase()} details to add a new member.`}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="full_name">Full Name *</Label>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="full_name" className="text-sm font-medium">Full Name *</Label>
               <Input
                 id="full_name"
                 value={formData.full_name}
@@ -453,8 +456,8 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
                 placeholder="e.g. Rahul Sen"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="roll_number">Roll Number</Label>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="roll_number" className="text-sm font-medium">Roll Number</Label>
               <Input
                 id="roll_number"
                 value={formData.roll_number}
@@ -463,8 +466,8 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
                 placeholder="e.g. 22BCS001"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -474,8 +477,8 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
                 placeholder="e.g. rahul@student.dau.ac.in"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="designation">Designation *</Label>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="designation" className="text-sm font-medium">Designation *</Label>
               <Select
                 value={['Convener', 'Dy. Convener', 'Core'].includes(formData.designation) ? formData.designation : 'Special Designation'}
                 onValueChange={(val) => {
@@ -486,7 +489,7 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
                   }
                 }}
               >
-                <SelectTrigger id="designation" className="w-full">
+                <SelectTrigger id="designation" className="w-full rounded-xl">
                   <SelectValue placeholder="Select Designation" />
                 </SelectTrigger>
                 <SelectContent>
@@ -497,10 +500,10 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             {!['Convener', 'Dy. Convener', 'Core'].includes(formData.designation) && (
-              <div className="grid gap-2 animate-in fade-in-50 duration-200">
-                <Label htmlFor="custom_designation">Custom Designation Title *</Label>
+              <div className="flex flex-col gap-2 animate-in fade-in-50 duration-200">
+                <Label htmlFor="custom_designation" className="text-sm font-medium">Custom Designation Title *</Label>
                 <Input
                   id="custom_designation"
                   value={formData.designation}
@@ -510,9 +513,9 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
                 />
               </div>
             )}
-            
-            <div className="grid gap-2">
-              <Label htmlFor="phone">Phone Number *</Label>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
               <Input
                 id="phone"
                 value={formData.phone}
@@ -521,26 +524,20 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
                 placeholder="e.g. 9876543210"
               />
             </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="tenure_start_date">Tenure Start Date *</Label>
-              <Input
-                id="tenure_start_date"
-                type="date"
-                value={formData.tenure_start_date}
-                onChange={(e) => setFormData({ ...formData, tenure_start_date: e.target.value })}
-                className="rounded-xl"
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="tenure_start_date" className="text-sm font-medium">Tenure Start Date *</Label>
+              <DatePicker
+                date={formData.tenure_start_date ? new Date(formData.tenure_start_date) : undefined}
+                setDate={(d) => setFormData({ ...formData, tenure_start_date: d ? d.toISOString().split('T')[0] : '' })}
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="rounded-xl">
-              Cancel
-            </Button>
-            <Button 
-              onClick={saveMember} 
-              disabled={isSaving || !formData.full_name.trim() || !formData.phone.trim() || !formData.tenure_start_date.trim() || !formData.designation.trim()} 
-              className="rounded-xl bg-brand hover:bg-brand/90 text-white font-semibold"
+          <DialogFooter className="pt-4 border-t border-borderSoft">
+            <Button
+              onClick={saveMember}
+              disabled={isSaving || !formData.full_name.trim() || !formData.phone.trim() || !formData.tenure_start_date.trim() || !formData.designation.trim()}
+              className="rounded-xl w-full sm:w-auto"
             >
               {isSaving ? 'Saving...' : editingMember ? 'Save Changes' : 'Add Member'}
             </Button>
@@ -573,34 +570,30 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
 
       {/* Resignation / Impeachment Dialog */}
       <Dialog open={resignDialogOpen} onOpenChange={setResignDialogOpen}>
-        <DialogContent className="sm:max-w-[420px] rounded-2xl bg-card">
-          <DialogHeader>
-            <DialogTitle className="text-warning flex items-center gap-1.5">
-              <Trash2 size={20} />
+        <DialogContent className="sm:max-w-[420px] rounded-2xl">
+          <DialogHeader className="pb-1">
+            <DialogTitle className="text-xl font-bold text-textPrimary flex items-center gap-2">
               End Member Tenure
             </DialogTitle>
-            <DialogDescription>
-              Specify the resignation/impeachment date for <strong className="text-textPrimary">{memberToResign?.full_name}</strong> to move them to Past Members.
+            <DialogDescription className="text-sm text-textMuted">
+              Specify the date and reason for <strong className="text-textPrimary">{memberToResign?.full_name}</strong> to move them to Past Members.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3 py-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor="resign_date">Resignation / Impeachment Date *</Label>
-              <Input
-                id="resign_date"
-                type="date"
-                value={resignDate}
-                onChange={(e) => setResignDate(e.target.value)}
-                className="rounded-xl"
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-2">
+              <Label className="text-sm font-medium">Date *</Label>
+              <DatePicker
+                date={resignDate ? new Date(resignDate) : undefined}
+                setDate={(d) => setResignDate(d ? d.toISOString().split('T')[0] : '')}
               />
             </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="resign_reason">Reason for Ending Tenure *</Label>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="resign_reason" className="text-sm font-medium">Reason *</Label>
               <Select
                 value={resignReason}
                 onValueChange={(val) => setResignReason(val)}
               >
-                <SelectTrigger id="resign_reason" className="w-full">
+                <SelectTrigger id="resign_reason" className="w-full rounded-xl">
                   <SelectValue placeholder="Select Reason" />
                 </SelectTrigger>
                 <SelectContent>
@@ -611,11 +604,12 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResignDialogOpen(false)} disabled={isResigning} className="rounded-xl">
-              Cancel
-            </Button>
-            <Button onClick={confirmResign} disabled={isResigning || !resignDate} className="rounded-xl bg-warning hover:bg-warning/90 text-white font-semibold">
+          <DialogFooter className="pt-4 border-t border-borderSoft">
+            <Button
+              onClick={confirmResign}
+              disabled={isResigning || !resignDate}
+              className="rounded-xl w-full sm:w-auto"
+            >
               {isResigning ? 'Recording...' : 'End Tenure'}
             </Button>
           </DialogFooter>
