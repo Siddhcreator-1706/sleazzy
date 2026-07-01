@@ -18,6 +18,7 @@ import {
   Archive,
   MapPin,
   Menu,
+  Key,
 } from 'lucide-react';
 import { User } from '../types';
 import { Button } from '../components/ui/button';
@@ -26,6 +27,7 @@ import { ThemeToggle } from '../components/theme-toggle';
 import NotificationPanel from '../components/NotificationPanel';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import { Logo } from '../components/Logo';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { GdgFooterCredit } from '../components/GdgFooterCredit';
 import { cn } from '@/lib/utils';
 import { getSocket } from '../lib/socket';
@@ -50,6 +52,7 @@ const adminLinks = [
 
 const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = React.useState(false);
   const location = useLocation();
   const isCommittee = user.name.toLowerCase().includes('committee');
   const clubLabel = isCommittee ? 'Committee' : 'Club';
@@ -145,6 +148,15 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                 )}
               </NavLink>
             ))}
+            <div className="mt-2 border-t border-borderSoft/50 pt-2">
+              <button 
+                onClick={() => setIsPasswordModalOpen(true)}
+                className={cn(navItemClass({ isActive: false }), "w-full text-left")}
+              >
+                <Key size={20} className="relative z-10 text-textMuted" />
+                <span className="relative z-10">Change Password</span>
+              </button>
+            </div>
           </nav>
 
           {/* User Card */}
@@ -169,14 +181,17 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                   {user.role === 'club' ? `Group ${user.group}` : 'Administrator'}
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onLogout}
-                className="h-8 w-8 rounded-lg text-textMuted hover:text-error hover:bg-error/10 shrink-0 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-              >
-                <LogOut size={16} />
-              </Button>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onLogout}
+                  className="h-8 w-8 rounded-lg text-textMuted hover:text-error hover:bg-error/10 shrink-0 cursor-pointer"
+                  title="Logout"
+                >
+                  <LogOut size={16} />
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -233,6 +248,18 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                         )}
                       </NavLink>
                     ))}
+                    <div className="mt-2 border-t border-borderSoft/50 pt-2">
+                      <button 
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          setIsPasswordModalOpen(true);
+                        }}
+                        className={cn(navItemClass({ isActive: false }), "w-full text-left")}
+                      >
+                        <Key size={20} className="relative z-10 text-textMuted" />
+                        <span className="relative z-10">Change Password</span>
+                      </button>
+                    </div>
                   </nav>
                   
                   {/* User Profile Area (Mobile) */}
@@ -295,6 +322,12 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
           <GdgFooterCredit compact className="max-w-none" />
         </footer>
       </div>
+
+      <ChangePasswordModal 
+        open={isPasswordModalOpen} 
+        onOpenChange={setIsPasswordModalOpen} 
+        userEmail={user.email}
+      />
     </div>
   );
 };

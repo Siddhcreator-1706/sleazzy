@@ -1,11 +1,21 @@
 import emailjs from '@emailjs/nodejs';
 
-const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
-const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
-const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
-const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
-const APPROVAL_MAIL = process.env.APPROVAL_MAIL;
+const PASSWORD_EMAILJS_SERVICE_ID = process.env.PASSWORD_EMAILJS_SERVICE_ID;
+const PASSWORD_EMAILJS_TEMPLATE_ID = process.env.PASSWORD_EMAILJS_TEMPLATE_ID;
+const PASSWORD_EMAILJS_PUBLIC_KEY = process.env.PASSWORD_EMAILJS_PUBLIC_KEY;
+const PASSWORD_EMAILJS_PRIVATE_KEY = process.env.PASSWORD_EMAILJS_PRIVATE_KEY;
 const PASSWORD_MAIL = process.env.PASSWORD_MAIL;
+
+const APPROVAL_EMAILJS_SERVICE_ID = process.env.APPROVAL_EMAILJS_SERVICE_ID;
+const APPROVAL_EMAILJS_TEMPLATE_ID = process.env.APPROVAL_EMAILJS_TEMPLATE_ID;
+const APPROVAL_EMAILJS_PUBLIC_KEY = process.env.APPROVAL_EMAILJS_PUBLIC_KEY;
+const APPROVAL_EMAILJS_PRIVATE_KEY = process.env.APPROVAL_EMAILJS_PRIVATE_KEY;
+const APPROVAL_MAIL = process.env.APPROVAL_MAIL;
+
+const REMINDER_EMAILJS_SERVICE_ID = process.env.REMINDER_EMAILJS_SERVICE_ID;
+const REMINDER_EMAILJS_TEMPLATE_ID = process.env.REMINDER_EMAILJS_TEMPLATE_ID;
+const REMINDER_EMAILJS_PUBLIC_KEY = process.env.REMINDER_EMAILJS_PUBLIC_KEY;
+const REMINDER_EMAILJS_PRIVATE_KEY = process.env.REMINDER_EMAILJS_PRIVATE_KEY;
 const EVENT_REMINDER_MAIL = process.env.EVENT_REMINDER_MAIL;
 
 export type PendingBookingItem = {
@@ -45,12 +55,30 @@ function formatTimeLabel(iso: string): string {
   });
 }
 
-function isEmailJsConfigured(): boolean {
+function isPasswordEmailJsConfigured(): boolean {
   return !!(
-    EMAILJS_SERVICE_ID &&
-    EMAILJS_TEMPLATE_ID &&
-    EMAILJS_PUBLIC_KEY &&
-    EMAILJS_PRIVATE_KEY
+    PASSWORD_EMAILJS_SERVICE_ID &&
+    PASSWORD_EMAILJS_TEMPLATE_ID &&
+    PASSWORD_EMAILJS_PUBLIC_KEY &&
+    PASSWORD_EMAILJS_PRIVATE_KEY
+  );
+}
+
+function isApprovalEmailJsConfigured(): boolean {
+  return !!(
+    APPROVAL_EMAILJS_SERVICE_ID &&
+    APPROVAL_EMAILJS_TEMPLATE_ID &&
+    APPROVAL_EMAILJS_PUBLIC_KEY &&
+    APPROVAL_EMAILJS_PRIVATE_KEY
+  );
+}
+
+function isReminderEmailJsConfigured(): boolean {
+  return !!(
+    REMINDER_EMAILJS_SERVICE_ID &&
+    REMINDER_EMAILJS_TEMPLATE_ID &&
+    REMINDER_EMAILJS_PUBLIC_KEY &&
+    REMINDER_EMAILJS_PRIVATE_KEY
   );
 }
 
@@ -62,19 +90,19 @@ export async function sendPasswordResetEmail(
   email: string,
   tempPassword: string
 ): Promise<{ sent: boolean; error?: string }> {
-  if (!isEmailJsConfigured()) {
+  if (!isPasswordEmailJsConfigured()) {
     console.warn('EmailJS not configured; skipping password reset email.');
     return { sent: false };
   }
 
   const title = 'Password Reset Request';
   const subject = 'Password Reset - Sleazzy';
-  const message = `Dear User,\n\nWe received a request to reset your password. Your new temporary password is:\n\n${tempPassword}\n\nPlease use this password to log in and change your password in settings if needed.\n\nRegards,\nSleazzy Team`;
+  const message = `Dear User,\n\nWe received a request to reset your password. Your 6-digit verification code is:\n\n${tempPassword}\n\nThis code will expire in 5 minutes. Please use this code to verify your identity and reset your password.\n\nRegards,\nSleazzy Team`;
   const messageHtml = `
     <p>Dear User,</p>
-    <p>We received a request to reset your password. Your new temporary password is:</p>
-    <h3 style="background:#f4f4f4; padding:10px; display:inline-block; font-family:monospace; border-radius:4px; margin: 10px 0;">${tempPassword}</h3>
-    <p>Please use this password to log in.</p>
+    <p>We received a request to reset your password. Your 6-digit verification code is:</p>
+    <h3 style="background:#f4f4f4; padding:10px; display:inline-block; font-family:monospace; border-radius:4px; margin: 10px 0; letter-spacing: 4px;">${tempPassword}</h3>
+    <p><strong>This code will expire in 5 minutes.</strong> Please use this code to verify your identity and reset your password.</p>
     <p>Regards,<br/>Sleazzy Team</p>
   `;
 
@@ -90,12 +118,12 @@ export async function sendPasswordResetEmail(
 
   try {
     await emailjs.send(
-      EMAILJS_SERVICE_ID!,
-      EMAILJS_TEMPLATE_ID!,
+      PASSWORD_EMAILJS_SERVICE_ID!,
+      PASSWORD_EMAILJS_TEMPLATE_ID!,
       templateParams,
       {
-        publicKey: EMAILJS_PUBLIC_KEY!,
-        privateKey: EMAILJS_PRIVATE_KEY!,
+        publicKey: PASSWORD_EMAILJS_PUBLIC_KEY!,
+        privateKey: PASSWORD_EMAILJS_PRIVATE_KEY!,
       }
     );
     return { sent: true };
@@ -117,7 +145,7 @@ export async function sendBookingApprovedEmailToClub(
   startTime: string,
   endTime: string
 ): Promise<{ sent: boolean; error?: string }> {
-  if (!isEmailJsConfigured()) return { sent: false };
+  if (!isApprovalEmailJsConfigured()) return { sent: false };
 
   const title = 'Booking Approved';
   const subject = 'Booking Approved - Sleazzy';
@@ -135,9 +163,9 @@ export async function sendBookingApprovedEmailToClub(
   };
 
   try {
-    await emailjs.send(EMAILJS_SERVICE_ID!, EMAILJS_TEMPLATE_ID!, templateParams, {
-      publicKey: EMAILJS_PUBLIC_KEY!,
-      privateKey: EMAILJS_PRIVATE_KEY!,
+    await emailjs.send(APPROVAL_EMAILJS_SERVICE_ID!, APPROVAL_EMAILJS_TEMPLATE_ID!, templateParams, {
+      publicKey: APPROVAL_EMAILJS_PUBLIC_KEY!,
+      privateKey: APPROVAL_EMAILJS_PRIVATE_KEY!,
     });
     return { sent: true };
   } catch (err) {
@@ -152,7 +180,7 @@ export async function sendEventReportReminderEmail(
   clubEmail: string,
   eventName: string
 ): Promise<{ sent: boolean; error?: string }> {
-  if (!isEmailJsConfigured()) return { sent: false };
+  if (!isReminderEmailJsConfigured()) return { sent: false };
 
   const title = 'Event Report Reminder';
   const subject = 'Event Report Reminder - Sleazzy';
@@ -170,9 +198,9 @@ export async function sendEventReportReminderEmail(
   };
 
   try {
-    await emailjs.send(EMAILJS_SERVICE_ID!, EMAILJS_TEMPLATE_ID!, templateParams, {
-      publicKey: EMAILJS_PUBLIC_KEY!,
-      privateKey: EMAILJS_PRIVATE_KEY!,
+    await emailjs.send(REMINDER_EMAILJS_SERVICE_ID!, REMINDER_EMAILJS_TEMPLATE_ID!, templateParams, {
+      publicKey: REMINDER_EMAILJS_PUBLIC_KEY!,
+      privateKey: REMINDER_EMAILJS_PRIVATE_KEY!,
     });
     return { sent: true };
   } catch (err) {
