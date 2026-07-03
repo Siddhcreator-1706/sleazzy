@@ -41,7 +41,7 @@ const PolicyPage: React.FC = () => {
             <AccordionContent className="px-5 pb-5 pt-0">
               <ul className="list-disc pl-6 space-y-2 text-sm text-muted-foreground">
                 <li><strong>Co-curricular Events:</strong> Must be booked at least <span className="text-error font-bold">14 days</span> in advance.</li>
-                <li><strong>Open-for-All Events:</strong> Must be booked at least <span className="text-error font-bold">7 days</span> in advance.</li>
+                <li><strong>Open-for-All Events:</strong> Must be booked at least <span className="text-error font-bold">20 days</span> in advance.</li>
                 <li><strong>Closed Club Events:</strong> Can be booked up to <span className="text-error font-bold">1 day</span> before the event date.</li>
                 <li>Requests made outside these windows will be automatically flagged for rejection unless a special waiver is granted by the Faculty Convener.</li>
               </ul>

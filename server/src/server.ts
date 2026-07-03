@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { createServer } from 'http';
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken'; // Added standard JWT verification
+import helmet from 'helmet';
 
 import bookingsRoutes from './routes/bookings';
 import adminRoutes from './routes/admin';
@@ -36,6 +37,10 @@ const getBuildVersion = (): string => {
   }
 };
 const BUILD_VERSION = getBuildVersion();
+
+app.set('trust proxy', 1);
+
+app.use(helmet());
 
 app.use(cors({
   origin: [
@@ -243,6 +248,7 @@ app.get('/api/health', (_req, res) => {
 import eventsRoutes from './routes/events';
 import eventReportsRoutes from './routes/eventReports';
 import archivesRoutes from './routes/archives';
+import settingsRoutes from './routes/settings';
 import { startCronJobs } from './services/emailReminders';
 
 app.use('/api', bookingsRoutes);
@@ -253,6 +259,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/event-reports', eventReportsRoutes);
 app.use('/api/archives', archivesRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Start background cron jobs
 startCronJobs();

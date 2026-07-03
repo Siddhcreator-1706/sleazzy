@@ -210,7 +210,7 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
     
     let reqDays = 0;
     if (evt.event_type === 'co_curricular') reqDays = 14;
-    else if (evt.event_type === 'open_all') reqDays = 7;
+    else if (evt.event_type === 'open_all') reqDays = 20;
     else if (evt.event_type === 'closed_club') reqDays = 1;
 
     if (diffDays < reqDays) {
@@ -536,7 +536,7 @@ const BookSlot: React.FC<BookSlotProps> = ({ currentUser }) => {
                       <div className="h-2 w-2 rounded-full bg-brand mt-2 shrink-0" />
                       <div>
                         <span className="font-semibold block text-textPrimary text-sm mb-1">Advance Notice</span>
-                        <p className="text-xs text-textSecondary leading-relaxed">Closed club: 1 day. Open: 7 days. Co-curricular: 14 days.</p>
+                        <p className="text-xs text-textSecondary leading-relaxed">Closed club: 1 day. Open: 20 days. Co-curricular: 14 days.</p>
                       </div>
                     </div>
                   </div>
