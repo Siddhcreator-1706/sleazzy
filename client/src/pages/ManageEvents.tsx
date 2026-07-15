@@ -255,7 +255,7 @@ const ManageEvents: React.FC<ManageEventsProps> = ({ currentUser }) => {
 
       {/* Edit Event Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-borderSoft text-textPrimary overflow-y-auto max-h-[85vh]">
+        <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-borderSoft text-textPrimary overflow-y-auto max-h-[85dvh]">
           <DialogHeader>
             <DialogTitle>Edit Event</DialogTitle>
             <DialogDescription>Modify event details and dates.</DialogDescription>

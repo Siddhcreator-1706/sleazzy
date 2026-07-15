@@ -434,7 +434,7 @@ const ClubMembers: React.FC<ClubMembersProps> = ({ user }) => {
 
       {/* Add / Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-md rounded-2xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader className="pb-1">
             <DialogTitle className="text-xl font-bold text-textPrimary">
               {editingMember ? 'Edit Member Details' : `Add ${entityType} Member`}

@@ -694,7 +694,7 @@ const ClubDashboard: React.FC<ClubDashboardProps> = ({ user }) => {
 
       {/* Dialog for Edit About & Socials */}
       <Dialog open={isEditAboutOpen} onOpenChange={setIsEditAboutOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl bg-card border border-borderSoft text-textPrimary max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg rounded-2xl bg-card border border-borderSoft text-textPrimary max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit {entityType} Profile</DialogTitle>
             <DialogDescription className="text-textMuted">

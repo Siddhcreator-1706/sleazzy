@@ -207,7 +207,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
     };
 
     return (
-        <div className="min-h-screen bg-bgMain pb-16">
+        <div className="min-h-dvh bg-bgMain pb-16">
             <header ref={headerRef} className="sticky top-0 z-30 bg-bgMain/80 backdrop-blur-xl border-b border-borderSoft/40">
                 <div className="flex items-center justify-between px-3 sm:px-6 py-3 max-w-7xl mx-auto">
                     {/* Left: Logo & Nav Links */}
@@ -390,7 +390,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
 
             {/* ====== Club Committee Roster Modal ====== */}
             <Dialog open={!!selectedClubForModal} onOpenChange={(open) => !open && setSelectedClubForModal(null)}>
-                <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-xl p-4 sm:p-6 rounded-2xl max-h-[85vh] overflow-y-auto bg-card">
+                <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-xl p-4 sm:p-6 rounded-2xl max-h-[85dvh] overflow-y-auto bg-card">
                     <DialogHeader className="border-b border-borderSoft/40 pb-4 flex flex-row items-center gap-3 sm:gap-4 space-y-0">
                         <Avatar className={cn("h-14 w-14 border border-borderSoft rounded-2xl shrink-0 bg-white")}>
                             <AvatarImage src={selectedClubForModal?.logo_url || ''} alt={selectedClubForModal?.name} className="object-contain p-1 drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]" />
@@ -414,7 +414,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                             <TabsTrigger value="members" className="rounded-lg py-1.5 text-sm font-medium cursor-pointer">Members</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="members" className="min-h-[250px] max-h-[50vh] flex flex-col focus-visible:outline-none focus-visible:ring-0 mt-0">
+                        <TabsContent value="members" className="min-h-[250px] max-h-[50dvh] flex flex-col focus-visible:outline-none focus-visible:ring-0 mt-0">
                             <div className="flex items-center justify-between px-1 mb-3 shrink-0">
                                 <span className="text-xs font-semibold text-textMuted uppercase tracking-wider">Members</span>
                                 <span className="text-xs text-textMuted font-medium">{selectedClubMembers.length} member{selectedClubMembers.length !== 1 ? 's' : ''}</span>
@@ -455,7 +455,7 @@ const ClubsCommitteesPage: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogi
                             </div>
                         </TabsContent>
 
-                        <TabsContent value="about" className="min-h-[250px] max-h-[50vh] flex flex-col focus-visible:outline-none focus-visible:ring-0 mt-0">
+                        <TabsContent value="about" className="min-h-[250px] max-h-[50dvh] flex flex-col focus-visible:outline-none focus-visible:ring-0 mt-0">
                             <div className="space-y-4 flex-1 overflow-y-auto pr-1">
                                 <div className="space-y-2">
                                     <span className="text-xs font-bold text-textMuted uppercase tracking-wider block">Description</span>

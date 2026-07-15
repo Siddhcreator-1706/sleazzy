@@ -314,7 +314,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
     const getColor = (type?: string) => EVENT_TYPE_COLORS[type || ''] || DEFAULT_COLOR;
 
     return (
-        <div className="min-h-screen relative overflow-clip bg-bgMain">
+        <div className="min-h-dvh relative overflow-clip bg-bgMain">
             {/* ====== Header ====== */}
             <header ref={headerRef} className="sticky top-0 z-30 bg-bgMain/80 backdrop-blur-xl border-b border-borderSoft/40">
                 <div className="flex items-center justify-between px-3 sm:px-6 py-3 max-w-7xl mx-auto">
@@ -841,7 +841,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                                         <X size={18} />
                                     </button>
                                 </div>
-                                <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                                <div className="space-y-2 max-h-[60dvh] overflow-y-auto">
                                     {selectedDayEvents.map(event => {
                                         const c = getColor(event.eventType);
                                         return (

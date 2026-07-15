@@ -105,7 +105,7 @@ export default function AdminEventReports() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-dvh">
       <GradientBackground />
       <div className="relative z-10 space-y-6">
         <div className="flex justify-between items-center">

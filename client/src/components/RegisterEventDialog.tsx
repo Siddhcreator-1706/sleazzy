@@ -141,7 +141,7 @@ const RegisterEventDialog: React.FC<RegisterEventDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-borderSoft text-textPrimary overflow-y-auto max-h-[85vh]">
+      <DialogContent className="sm:max-w-md rounded-2xl bg-card border border-borderSoft text-textPrimary overflow-y-auto max-h-[85dvh]">
         <DialogHeader>
           <DialogTitle>Register a New Event</DialogTitle>
           <DialogDescription className="text-textMuted">

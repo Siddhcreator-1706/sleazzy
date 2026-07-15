@@ -231,7 +231,7 @@ const AboutSBG: React.FC<{ onGoToLogin: () => void }> = ({ onGoToLogin }) => {
     const initials = (name: string) => getInitials(name);
 
     return (
-        <div className="min-h-screen bg-bgMain">
+        <div className="min-h-dvh bg-bgMain">
             {/* ====== Header ====== */}
             <header ref={headerRef} className="sticky top-0 z-30 bg-bgMain/80 backdrop-blur-xl border-b border-borderSoft/40">
                 <div className="flex items-center justify-between px-3 sm:px-6 py-3 max-w-7xl mx-auto">

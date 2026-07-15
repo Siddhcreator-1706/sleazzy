@@ -212,7 +212,7 @@ const AddBookingDialog: React.FC<Props> = ({ open, onOpenChange, onCreated }) =>
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[550px] max-h-[90dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Book Venues</DialogTitle>
                     <DialogDescription>

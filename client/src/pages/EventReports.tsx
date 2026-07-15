@@ -126,7 +126,7 @@ export default function EventReports() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-dvh">
       <GradientBackground />
       <div className="relative z-10 space-y-8 pb-12">
         <div className="space-y-2">
@@ -227,7 +227,7 @@ export default function EventReports() {
         )}
 
         <Dialog open={!!selectedEventId || !!editingReportId} onOpenChange={(open) => !open && closeDialog()}>
-          <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[600px] max-h-[85dvh] overflow-y-auto">
             <DialogHeader className="pb-2">
               <DialogTitle className="text-xl font-bold">{editingReportId ? 'Edit Event Report' : 'Submit Event Report'}</DialogTitle>
             </DialogHeader>
