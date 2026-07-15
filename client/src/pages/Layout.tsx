@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { User } from '../types';
 import { Button } from '../components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '../components/ui/sheet';
 import { ThemeToggle } from '../components/theme-toggle';
 import NotificationPanel from '../components/NotificationPanel';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
@@ -218,6 +218,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[280px] sm:w-[320px] flex flex-col p-0 border-r border-borderSoft bg-card/90 backdrop-blur-xl">
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                   <div className="p-5 border-b border-borderSoft">
                     <Logo size="md" />
                   </div>

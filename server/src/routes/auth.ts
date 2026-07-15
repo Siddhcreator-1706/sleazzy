@@ -7,14 +7,10 @@ import authMiddleware from '../middleware/auth';
 import { isOfficialCommitteeEmail, OFFICIAL_EMAIL_DOMAIN } from '../constants/officialEmails';
 import { sendPasswordResetEmail } from '../services/email';
 import rateLimit from 'express-rate-limit';
-import postgresStores from '@acpr/rate-limit-postgresql';
 
 const router = express.Router();
 
-const pgStoreConfig = { connectionString: process.env.DATABASE_URL };
-
 const loginLimiter = rateLimit({
-    store: new postgresStores.PostgresStore(pgStoreConfig, 'login_limiter'),
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5,
     message: { error: 'Too many login attempts, please try again after 15 minutes' },
@@ -23,7 +19,6 @@ const loginLimiter = rateLimit({
 });
 
 const registerLimiter = rateLimit({
-    store: new postgresStores.PostgresStore(pgStoreConfig, 'register_limiter'),
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5,
     message: { error: 'Too many registration attempts, please try again after 15 minutes' },
@@ -32,7 +27,6 @@ const registerLimiter = rateLimit({
 });
 
 const passwordResetLimiter = rateLimit({
-    store: new postgresStores.PostgresStore(pgStoreConfig, 'password_reset_limiter'),
     windowMs: 60 * 60 * 1000, // 1 hour
     max: 3,
     message: { error: 'Too many password reset requests, please try again after 1 hour' },
