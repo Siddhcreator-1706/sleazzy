@@ -265,7 +265,7 @@ app.use('/api/settings', settingsRoutes);
 startCronJobs();
 
 // Serve frontend static files
-const clientDir = process.env.CLIENT_DIST_DIR || path.join(__dirname, '../../client');
+const clientDir = process.env.CLIENT_DIST_DIR || path.join(__dirname, '../../client/dist');
 if (fs.existsSync(clientDir)) {
   app.use(
     express.static(clientDir, {
